@@ -633,7 +633,7 @@ function buildLessonCards(filter=''){
  Object.keys(EXPLAIN).filter(name=>lessonSubject(name)===selectedSubject && name.includes(filter.trim())).forEach((name,i)=>{
   const card=document.createElement('article');card.className='lesson-card';
   const num=document.createElement('span');num.className='lesson-number';num.textContent=`MANW LESSON ${String(i+1).padStart(2,'0')}`;
-  const art=document.createElement('img');art.className='lesson-art';art.src=window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;art.loading='lazy';
+  const art=document.createElement('img');art.className='lesson-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;art.loading='lazy';
   const title=document.createElement('h3');title.textContent=name;
   const desc=document.createElement('p');const meta=window.MANW_LESSON_META?.[name];desc.textContent=meta?`${meta.unit} · ${meta.kind} · شرح + ${BANK[name]?.length||0} سؤالًا تدريبيًا`:BANK[name]?`شرح مبسط + ${BANK[name].length} سؤالًا تدريبيًا`:'شرح مبسط ومراجعة للدرس';
   const actions=document.createElement('div');actions.className='lesson-actions';

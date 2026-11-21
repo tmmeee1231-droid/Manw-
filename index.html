@@ -344,10 +344,7 @@ const ENGLISH_LESSON_ART = [
  ["🏭","Our Machine-Driven World","Technology • Maintenance"],
  ["⚖️","For or Against?","Advantages • Disadvantages"]
 ];
-ENGLISH_LESSON_ART.forEach((item,i)=>{
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#162b4d"/><stop offset="1" stop-color="#287c82"/></linearGradient></defs><rect width="960" height="420" rx="32" fill="url(#g)"/><circle cx="760" cy="115" r="150" fill="#ffffff" opacity=".08"/><circle cx="120" cy="350" r="170" fill="#ffffff" opacity=".06"/><text x="480" y="185" text-anchor="middle" font-size="112">'+item[0]+'</text><text x="480" y="285" text-anchor="middle" font-family="Arial,sans-serif" font-size="38" font-weight="700" fill="#fff">'+item[1]+'</text><text x="480" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" fill="#d7f2f0">'+item[2]+'</text></svg>';
- LESSON_IMAGES[i]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-});
+
 
 
 /* English course: first ten lesson sections, based on the uploaded Term 1 2027 booklet vocabulary and lesson themes. */

@@ -587,7 +587,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
  window.MANW_CUSTOM_LESSONS=customLessons;
  function renderSubjects(){
-  const names=[...new Set(['الأحياء',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  const names=[...new Set(['الأحياء','اللغة الإنجليزية',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
   const student=document.getElementById('studentSubject'),admin=$('msSubjectOptions');
   if(student){const keep=student.value||'الأحياء';student.innerHTML='';names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;student.appendChild(o)});student.value=names.includes(keep)?keep:'الأحياء';if(typeof selectedSubject!=='undefined')selectedSubject=student.value;}
   if(admin){admin.innerHTML='';names.forEach(n=>{const o=document.createElement('option');o.value=n;admin.appendChild(o)})}

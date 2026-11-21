@@ -1130,14 +1130,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  function clearProduct(){['msEditId','msName','msPrice','msDescription','msNumbers','msImageUrl'].forEach(id=>$(id).value='');$('msImageFile').value='';$('msAvailable').checked=true}
  function fileData(file,max=1800000){return new Promise((resolve,reject)=>{if(!file)return resolve('');if(!file.type.startsWith('image/'))return reject(new Error('اختر ملف صورة فقط.'));if(file.size>max)return reject(new Error('الصورة كبيرة؛ الحد الأقصى 1.8MB.'));const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(new Error('تعذرت قراءة الصورة.'));r.readAsDataURL(file)})}
  $('msAdminOpen').onclick=()=>{$('msLogin').classList.toggle('ms-hidden');$('msPass').focus()};
- const adminCard=$('manwAdminCard');
- if(adminCard)adminCard.addEventListener('click',e=>{
-  e.preventDefault();
-  const login=$('msLogin'),pass=$('msPass'),store=$('store');
-  if(login.classList.contains('ms-hidden'))login.classList.remove('ms-hidden');
-  if(store)store.scrollIntoView({behavior:'smooth',block:'start'});
-  setTimeout(()=>{login.scrollIntoView({behavior:'smooth',block:'center'});pass.focus({preventScroll:true})},220);
- });
+
  $('msLoginBtn').onclick=async()=>{const ok=await checkPass($('msPass').value);if(ok){logged=true;$('msLogin').classList.add('ms-hidden');$('msPanel').classList.remove('ms-hidden');$('msPass').value='';renderAdminProducts();renderAdminLessons();loadSettingsForm()}else $('msLoginMsg').textContent='كلمة المرور غير صحيحة.'};
  $('msPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('msLoginBtn').click()});
  $('msLogout').onclick=()=>{logged=false;$('msPanel').classList.add('ms-hidden');$('msLogin').classList.remove('ms-hidden');$('msPass').value=''};
@@ -1178,8 +1171,17 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  renderQuestionEditor([]);
  setTheme();renderProducts();
 
- // Main dashboard shortcuts: each protected area opens its own authentication gate.
+ // Main dashboard shortcut: open the existing admin password gate.
  const adminCard=document.getElementById('manwAdminCard');
+ if(adminCard)adminCard.addEventListener('click',e=>{
+  e.preventDefault();
+  const login=document.getElementById('msLogin');
+  const pass=document.getElementById('msPass');
+  if(!login||!pass)return;
+  login.classList.remove('ms-hidden');
+  document.getElementById('store')?.scrollIntoView({behavior:'smooth',block:'start'});
+  requestAnimationFrame(()=>{login.scrollIntoView({behavior:'smooth',block:'center'});pass.focus({preventScroll:true})});
+ });
 })();
 </script>
 

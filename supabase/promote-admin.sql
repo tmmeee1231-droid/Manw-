@@ -11,7 +11,7 @@ select
   u.phone,
   'admin'
 from auth.users as u
-where lower(u.email) = lower('tmmeee1231@gmail.com')
+where lower(u.email) = lower('PUT_YOUR_GOOGLE_EMAIL_HERE')
 on conflict (user_id) do update
 set role = 'admin';
 
@@ -23,6 +23,6 @@ select
   p.is_banned
 from auth.users as u
 join public.student_profiles as p on p.user_id = u.id
-where lower(u.email) = lower('tmmeee1231@gmail.com');
+where lower(u.email) = lower('PUT_YOUR_GOOGLE_EMAIL_HERE');
 
 commit;

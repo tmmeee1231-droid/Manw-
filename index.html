@@ -168,11 +168,104 @@ footer{color:#c9b6bb}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
+
+<style id="manw-hacker-academy-theme">
+/* MANW // DARK HACKER ACADEMY */
+:root{--hack-green:#65ffb2;--hack-cyan:#65eaff;--hack-red:#ff3154;--hack-border:#25463c}
+html{background:#05090a}
+body{
+ background:
+  radial-gradient(ellipse at 50% -12%,#3b0614 0,transparent 42%),
+  radial-gradient(ellipse at 8% 42%,#07302735 0,transparent 34%),
+  linear-gradient(180deg,#070a0b,#050708 72%,#08090b)!important;
+ background-attachment:fixed!important;
+}
+body:before{
+ opacity:.16!important;z-index:0;
+ background:repeating-linear-gradient(0deg,transparent 0 3px,#6bffb20b 4px,transparent 5px 8px),
+ repeating-linear-gradient(90deg,transparent 0 48px,#62ffc008 49px 50px)!important;
+}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.12;
+ background-image:linear-gradient(#59ffad0b 1px,transparent 1px),linear-gradient(90deg,#59ffad0b 1px,transparent 1px);
+ background-size:42px 42px;mask-image:linear-gradient(to bottom,#000,transparent 78%)}
+header{
+ background:radial-gradient(ellipse at 50% 0,#550016 0,transparent 55%),linear-gradient(115deg,#030607,#090d0e 55%,#18030a)!important;
+ border-bottom:1px solid #4cffae66!important;box-shadow:0 15px 55px #000!important;
+}
+header:before{background:repeating-linear-gradient(115deg,transparent 0 34px,#64ffb208 35px 36px)!important}
+header:after{height:2px!important;inset:auto 8% 0!important;background:linear-gradient(90deg,transparent,#5dffb2,#ff2348,transparent)!important}
+.kicker{color:var(--hack-green)!important;letter-spacing:3px;text-shadow:0 0 12px #65ffb255}
+.brand{color:#f4fff9!important;text-shadow:0 0 10px #ff1744,0 0 26px #a0002b,0 0 48px #65ffb233!important;letter-spacing:4px}
+header p{color:#c8e8da!important}
+.hero-line{color:#e9fff3!important}
+.hero-line span{color:var(--hack-green)!important}
+nav a{border-color:#326b55!important;background:linear-gradient(145deg,#0c1c17,#090b0c)!important}
+nav a:hover{border-color:var(--hack-green)!important;box-shadow:0 0 18px #65ffb233!important}
+.wrap,header,.site-dashboard,main,footer{position:relative;z-index:1}
+.site-dashboard{
+ background:linear-gradient(145deg,#0d1715f5,#080c0d 70%,#10070a)!important;
+ border:1px solid #3b8063!important;box-shadow:0 18px 48px #000c,0 0 28px #36ff9a12!important;
+}
+.dashboard-heading h1{color:#f1fff7!important}
+.dashboard-heading p{color:#9ab9aa!important}
+.dashboard-mark{background:linear-gradient(145deg,#123d2c,#570018)!important;color:var(--hack-green);border:1px solid #65ffb266;box-shadow:0 0 22px #65ffb222!important}
+.dashboard-card{
+ background:linear-gradient(145deg,#111c19,#090d0e)!important;
+ border-color:#315344!important;box-shadow:inset 0 1px #ffffff09,0 8px 22px #0008;
+}
+.dashboard-card.red{background:linear-gradient(145deg,#300914,#100b0d)!important;border-color:#823044!important}
+.dashboard-card.green{background:linear-gradient(145deg,#0b2a1d,#0b1110)!important;border-color:#34775a!important}
+.dashboard-card.gold{background:linear-gradient(145deg,#28200d,#10100d)!important}
+.dashboard-card.blue{background:linear-gradient(145deg,#0b2027,#0b1012)!important}
+.dashboard-card.purple{background:linear-gradient(145deg,#211027,#100c13)!important}
+.dashboard-card:hover,.dashboard-card:focus-visible{border-color:var(--hack-green)!important;box-shadow:0 0 24px #65ffb226!important}
+.panel{
+ background:linear-gradient(145deg,#111917f5,#090c0df8)!important;
+ border-color:#294d40!important;box-shadow:0 16px 42px #000b,inset 0 1px #b8ffe20a,0 0 18px #42ffad0b!important;
+}
+.panel:before{background:linear-gradient(90deg,var(--hack-green),transparent)!important}
+h2{color:#eafff3!important;text-shadow:0 0 16px #65ffb21a!important}
+h3{color:#e8fff2}
+.lesson-card,.product-card{
+ background:linear-gradient(150deg,#14201b,#090c0d 75%)!important;
+ border-color:#37614e!important;box-shadow:inset 0 0 18px #65ffb20b,0 8px 22px #000a!important;
+}
+.lesson-card:hover,.product-card:hover{border-color:var(--hack-green)!important;box-shadow:0 0 24px #65ffb22b!important}
+.lesson-number,.tag{color:var(--hack-green)!important}
+.tag{background:#0b2119!important;border-color:#34795a!important}
+button,.product-card a,.wa-cta{
+ background:linear-gradient(125deg,#b9002c,#620019)!important;border-color:#ff3154!important;
+ box-shadow:0 0 13px #ff174426,0 5px 18px #0008!important;
+}
+button.subtle,.lesson-actions .subtle{background:linear-gradient(135deg,#10251c,#101415)!important;border-color:#39765a!important;color:#dffff0!important}
+select,.toolbar input,input,textarea{
+ background:#080e0d!important;color:#edfff5!important;border-color:#315846!important;
+}
+.option{background:#0b1210!important;border-color:#29483b!important}
+.option:has(input:checked){background:#10281d!important;border-color:var(--hack-green)!important}
+.progress,.mini-progress{background:#1a2b24!important}
+.bar,.mini-progress span{background:linear-gradient(90deg,#2b9e68,#75ffc0)!important}
+.detail-section{background:#0b1311!important;border-color:#2d5945!important}
+.detail-section h3{color:var(--hack-green)!important}
+.keypoint{background:#10251b!important;border-right-color:var(--hack-green)!important;color:#e4fff0!important}
+.notice,.notice-quote{background:#0d1714!important;border-color:#397456!important;color:#d6f5e4!important}
+.score,.correct{color:var(--hack-green)!important}
+footer{color:#789b89!important}
+:focus-visible{outline-color:var(--hack-green)!important}
+@media(max-width:640px){.brand{letter-spacing:2px}.site-dashboard{border-radius:16px}}
+@media(prefers-reduced-motion:no-preference){
+ .dashboard-mark{animation:manwTerminalPulse 3.8s ease-in-out infinite}
+ .lesson-card,.dashboard-card{transition:transform .2s,border-color .2s,box-shadow .2s}
+}
+@keyframes manwTerminalPulse{0%,100%{box-shadow:0 0 10px #65ffb211}50%{box-shadow:0 0 24px #65ffb244}}
+@media print{body:before,body:after{display:none!important}.panel,.lesson-card{background:#fff!important}}
+</style>
+
 </head><body>
 <header><div class="wrap">
-<div class="kicker">منصة MANW التعليمية والمتجر</div>
-<div class="brand">𝕄𝔸ℕ𝕎😈💪</div>
-<p>منصة شرح وتدريب الأحياء للثانوية العامة</p><div class="hero-line">ادعولي إن <span>ربنا يسترها معايا يا أحمد 😅</span></div>
+<div class="kicker">MANW // STUDY TERMINAL</div>
+<div class="brand">𝕄𝔸ℕ𝕎</div>
+<p>منصة تعليمية ذكية لطلاب المدارس والثانوية العامة — افهم الدرس، درّب نفسك، وتابع مستواك خطوة بخطوة.</p><div class="hero-line">ادعولي إن <span>ربنا يسترها معايا يا أحمد 😅</span></div>
 <nav><a href="#lessons">الشرح والتدريبات</a><a href="#store">MANW STORE</a><a href="#contact">تواصل واتساب</a></nav>
 </div></header>
 <main class="wrap">
@@ -183,7 +276,7 @@ footer{color:#c9b6bb}
       <h1>لوحة MANW الرئيسية</h1>
       <p>اختار القسم اللي عاوز تفتحه</p>
     </div>
-    <div class="dashboard-mark" aria-hidden="true">😈</div>
+    <div class="dashboard-mark" aria-hidden="true">⌘</div>
   </div>
   <div class="dashboard-grid">
     <a class="dashboard-card red" href="#lessons">

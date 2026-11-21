@@ -139,6 +139,14 @@ background:linear-gradient(145deg,#1c1517,#100d0e);transition:transform .18s,bor
 @media(max-width:650px){.site-dashboard{padding:16px;margin:15px auto}.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dashboard-card{min-height:125px;padding:13px}.dashboard-card strong{font-size:16px}}
 @media(max-width:360px){.dashboard-grid{grid-template-columns:1fr}.dashboard-card{min-height:105px}}
 
+
+/* Supabase student accounts */
+.student-auth{background:linear-gradient(145deg,#171313,#0d0b0c);border:1px solid #64202b;border-radius:18px;padding:18px;margin:18px 0;box-shadow:0 12px 35px #0008}
+.student-auth input{width:100%;padding:12px;border-radius:10px;border:1px solid #51212a;background:#090909;color:#fff;margin:6px 0 12px;font:inherit}
+.student-auth .auth-actions{display:flex;gap:10px;flex-wrap:wrap}.student-auth button{flex:1;min-width:150px}
+.student-auth .auth-status{font-size:13px;color:#e8cdd1;margin-top:10px;white-space:pre-wrap}
+.student-admin-list{margin-top:12px}.student-admin-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #48202a;flex-wrap:wrap}
+.student-admin-row small{display:block;color:#c7b4b8}.student-admin-row button{padding:7px 12px;font-size:13px}
 </style><style>
 
 /* MANW visual refresh: responsive red/black interface */
@@ -403,6 +411,15 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
 <nav><a href="#lessons">الشرح والتدريبات</a><a href="#store">MANW STORE</a><a href="#contact">تواصل واتساب</a></nav>
 </div></header>
 <main class="wrap">
+<section class="student-auth wrap" id="manwStudentAuth" aria-label="حساب الطالب">
+ <h2>👤 حساب الطالب</h2>
+ <p class="small">سجّل بحساب Google لحفظ حسابك ومتابعة درجاتك. استخدم اسمك ورقم موبايلك.</p>
+ <label for="manwStudentName">الاسم</label><input id="manwStudentName" maxlength="100" autocomplete="name" placeholder="اسم الطالب">
+ <label for="manwStudentPhone">رقم الموبايل</label><input id="manwStudentPhone" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx">
+ <div class="auth-actions"><button type="button" id="manwGoogleLogin">المتابعة باستخدام Google</button><button type="button" class="subtle" id="manwSignOut" hidden>تسجيل الخروج</button></div>
+ <div class="auth-status" id="manwAuthStatus" role="status">لم تسجل الدخول بعد.</div>
+</section>
+
 
 <section class="site-dashboard" aria-label="القائمة الرئيسية للموقع">
   <div class="dashboard-heading">
@@ -1230,4 +1247,72 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
 </script>
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(()=>{
+ const SUPABASE_URL='https://fgierwevhdmnmrkmqzcw.supabase.co';
+ const SUPABASE_KEY='sb_publishable_9ixbR2bKr6grtITmojcITA_OgC5_ngM';
+ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ const $=id=>document.getElementById(id);
+ const status=$('manwAuthStatus'),login=$('manwGoogleLogin'),logout=$('manwSignOut');
+ let currentProfile=null;
+ const say=t=>{status.textContent=t};
+ async function inspectSession(session){
+  if(!session){currentProfile=null;login.hidden=false;logout.hidden=true;say('لم تسجل الدخول بعد.');return}
+  const user=session.user;
+  const {data:profile,error}=await sb.from('student_profiles').select('user_id,full_name,phone,role,is_banned,created_at').eq('user_id',user.id).maybeSingle();
+  if(error){say('تعذر قراءة ملف الطالب: '+error.message);return}
+  if(!profile){say('تم تسجيل الدخول، لكن ملف الطالب لم يظهر بعد. حدّث الصفحة بعد قليل.');return}
+  if(profile.is_banned){await sb.auth.signOut();currentProfile=null;login.hidden=false;logout.hidden=true;say('هذا الحساب محظور من دخول المنصة. لو تعتقد أن ده خطأ تواصل مع الإدارة.');return}
+  currentProfile=profile;login.hidden=true;logout.hidden=false;
+  $('manwStudentName').value=profile.full_name||user.user_metadata?.full_name||user.user_metadata?.name||'';
+  $('manwStudentPhone').value=profile.phone||'';
+  say('أهلاً '+(profile.full_name||user.email||'بالطالب')+' — الحساب نشط.');
+  if(profile.role==='admin') renderStudentAdmin();
+  else document.getElementById('manwStudentAdmin')?.remove();
+ }
+ login.addEventListener('click',async()=>{
+  const name=$('manwStudentName').value.trim(),phone=$('manwStudentPhone').value.trim();
+  if(!name||!phone){say('اكتب الاسم ورقم الموبايل أولاً.');return}
+  if(!/^[0-9+()\\s-]{8,20}$/.test(phone)){say('راجع رقم الموبايل.');return}
+  localStorage.setItem('manw_pending_student_profile',JSON.stringify({name,phone}));
+  say('جاري تحويلك إلى Google…');
+  const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]+'#lessons',queryParams:{prompt:'select_account'}}});
+  if(error)say('تعذر بدء تسجيل Google: '+error.message);
+ });
+ logout.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
+ async function saveStudentDetails(){
+  const {data:{user}}=await sb.auth.getUser();if(!user)return;
+  const pending=JSON.parse(localStorage.getItem('manw_pending_student_profile')||'null');
+  const name=$('manwStudentName').value.trim()||(pending?.name)||currentProfile?.full_name||'';
+  const phone=$('manwStudentPhone').value.trim()||(pending?.phone)||currentProfile?.phone||'';
+  if(name||phone){const {error}=await sb.from('student_profiles').update({full_name:name,phone}).eq('user_id',user.id);if(error)say('تم الدخول، لكن تعذر حفظ الاسم أو الهاتف: '+error.message);else{localStorage.removeItem('manw_pending_student_profile');say('تم حفظ بيانات حسابك.');}}
+ }
+ async function renderStudentAdmin(){
+  const panel=document.getElementById('msPanel');if(!panel||document.getElementById('manwStudentAdmin'))return;
+  const box=document.createElement('section');box.className='student-auth';box.id='manwStudentAdmin';
+  box.innerHTML='<h3>👥 إدارة الطلاب</h3><input id="manwStudentSearch" placeholder="ابحث بالاسم أو رقم الموبايل"><div class="student-admin-list" id="manwStudentRows">جاري تحميل الطلاب…</div>';
+  panel.prepend(box);
+  const refresh=async()=>{
+   const list=$('manwStudentRows');list.textContent='جاري تحميل الطلاب…';
+   const {data,error}=await sb.from('student_profiles').select('user_id,full_name,phone,is_banned,created_at').order('created_at',{ascending:false});
+   if(error){list.textContent='تعذر تحميل الطلاب: '+error.message;return}
+   const q=$('manwStudentSearch').value.trim().toLowerCase();list.innerHTML='';
+   const filtered=(data||[]).filter(p=>(p.full_name||'').toLowerCase().includes(q)||(p.phone||'').toLowerCase().includes(q));
+   if(!filtered.length){list.textContent='لا يوجد طلاب مطابقون.';return}
+   filtered.forEach(p=>{
+    const row=document.createElement('div');row.className='student-admin-row';
+    const info=document.createElement('div');const name=document.createElement('strong');name.textContent=p.full_name||'طالب بدون اسم';const meta=document.createElement('small');meta.textContent=(p.phone||'بدون رقم')+' · '+(p.is_banned?'محظور':'نشط');info.append(name,meta);
+    const btn=document.createElement('button');btn.type='button';btn.className=p.is_banned?'subtle':'';btn.textContent=p.is_banned?'إلغاء الحظر':'حظر الطالب';
+    btn.addEventListener('click',async()=>{if(!confirm((p.is_banned?'إلغاء حظر ':'حظر ')+(p.full_name||'هذا الطالب')+'؟'))return;btn.disabled=true;const {error}=await sb.rpc('admin_set_student_ban',{target_user:p.user_id,ban_status:!p.is_banned});if(error){alert('تعذر تنفيذ العملية: '+error.message);btn.disabled=false}else refresh()});
+    row.append(info,btn);list.append(row);
+   });
+  };
+  $('manwStudentSearch').addEventListener('input',refresh);await refresh();
+ }
+ sb.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){await inspectSession(session);if(session)await saveStudentDetails()}});
+ sb.auth.getSession().then(({data})=>inspectSession(data.session));
+})();
+</script>
 </body></html>

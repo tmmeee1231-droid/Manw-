@@ -526,43 +526,85 @@ function updateStats(){
  $('completedCount').textContent=scores.length;
  $('averageScore').textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+'%':'—';
 }
-function openExplanation(name,showTranslation=false){
+async function translateLessonContent(lang){
+ const root=$('lessonDetailContent');
+ const nodes=[...root.querySelectorAll('.lesson-translatable')];
+ if(!nodes.length)return;
+ const status=document.createElement('p');status.className='small translation-status';status.textContent=lang==='ar|en'?'جارٍ ترجمة الشرح إلى الإنجليزية...':'جارٍ ترجمة الشرح إلى العربية...';
+ const actions=root.querySelector('.detail-actions');if(actions)root.insertBefore(status,actions);
+ const cache=window.MANW_TRANSLATION_CACHE||(window.MANW_TRANSLATION_CACHE={});
+ let done=0,failed=0;
+ for(const node of nodes){
+  const original=node.dataset.originalText||node.textContent;
+  node.dataset.originalText=original;
+  const key=lang+'|'+original;
+  try{
+   let translated=cache[key];
+   if(!translated){
+    const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(original.slice(0,480))+'&langpair='+lang;
+    const response=await fetch(url);
+    if(!response.ok)throw new Error('translation service');
+    const json=await response.json();
+    translated=json?.responseData?.translatedText;
+    if(!translated)throw new Error('empty translation');
+    cache[key]=translated;
+   }
+   node.textContent=translated;
+   node.dir=lang==='ar|en'?'ltr':'rtl';
+   done++;
+  }catch(e){failed++}
+ }
+ if(status.isConnected)status.textContent=failed?('اتترجم '+done+' جزء، وتعذر ترجمة '+failed+' أجزاء. جرّب مرة أخرى بعد قليل.'):'اكتملت الترجمة.';
+ const reset=root.querySelector('[data-translation-reset]');
+ if(reset)reset.hidden=false;
+}
+function resetLessonTranslation(){
+ const root=$('lessonDetailContent');
+ root.querySelectorAll('.lesson-translatable').forEach(node=>{
+  if(node.dataset.originalText!==undefined){node.textContent=node.dataset.originalText;delete node.dataset.originalText;}
+  node.dir='auto';
+ });
+ const status=root.querySelector('.translation-status');if(status)status.remove();
+ const reset=root.querySelector('[data-translation-reset]');if(reset)reset.hidden=true;
+}
+function openExplanation(name){
  const data=EXPLAIN[name];
  if(!data)return;
  $('lessonDetailContent').innerHTML='';
  const head=document.createElement('div');head.className='detail-head';
- const h=document.createElement('h2');h.textContent='📖 شرح درس: '+name;
+ const h=document.createElement('h2');h.className='lesson-translatable';h.textContent='📖 شرح درس: '+name;
  const art=document.createElement('img');art.className='detail-hero-art';art.src=window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;
- const intro=document.createElement('p');intro.className='small';intro.textContent=data.intro;
+ const intro=document.createElement('p');intro.className='small lesson-translatable';intro.textContent=data.intro;
  head.append(h,art,intro);$('lessonDetailContent').append(head);
  data.sections.forEach(([title,items])=>{
-   const sec=document.createElement('section');sec.className='detail-section';
-   const sh=document.createElement('h3');sh.textContent=title;sec.append(sh);
-   items.forEach(t=>{const p=document.createElement('p');p.textContent=t;p.style.lineHeight='1.9';p.style.whiteSpace='pre-wrap';sec.append(p);const translated=window.MANW_ENGLISH_TRANSLATIONS?.[name]?.[t];if(showTranslation&&translated){const ar=document.createElement('p');ar.className='translation-text';ar.textContent='الترجمة: '+translated;ar.style.cssText='line-height:1.9;white-space:pre-wrap;padding:10px 12px;margin:6px 0 14px;border-right:3px solid #a52b42;border-radius:8px;background:rgba(165,43,66,.09);color:var(--ink);direction:rtl';sec.append(ar)}});
-   $('lessonDetailContent').append(sec);
+  const sec=document.createElement('section');sec.className='detail-section';
+  const sh=document.createElement('h3');sh.className='lesson-translatable';sh.textContent=title;sec.append(sh);
+  items.forEach(t=>{const p=document.createElement('p');p.className='lesson-translatable';p.textContent=t;p.style.lineHeight='1.9';p.style.whiteSpace='pre-wrap';sec.append(p)});
+  $('lessonDetailContent').append(sec);
  });
  if(data.rules?.length){
-   const wrap=document.createElement('section');wrap.className='detail-section';
-   const heading=document.createElement('h3');heading.textContent='📚 القواعد المرتبطة بالوحدة';wrap.append(heading);
-   data.rules.forEach(rule=>{
-     const block=document.createElement('div');block.className='rule-card';block.style.cssText='padding:14px;margin:12px 0;border:1px solid rgba(128,128,128,.35);border-radius:14px;background:rgba(128,128,128,.06)';
-     const rh=document.createElement('h4');rh.textContent=rule.title;block.append(rh);
-     const rp=document.createElement('p');rp.textContent=rule.text;rp.style.lineHeight='1.9';block.append(rp);
-     const ex=document.createElement('p');ex.textContent='أمثلة: '+rule.examples.join(' | ');ex.style.whiteSpace='pre-wrap';ex.style.lineHeight='1.8';block.append(ex);
-     wrap.append(block);
-   });
-   $('lessonDetailContent').append(wrap);
+  const wrap=document.createElement('section');wrap.className='detail-section';
+  const heading=document.createElement('h3');heading.className='lesson-translatable';heading.textContent='📚 القواعد المرتبطة بالوحدة';wrap.append(heading);
+  data.rules.forEach(rule=>{
+   const block=document.createElement('div');block.className='rule-card';block.style.cssText='padding:14px;margin:12px 0;border:1px solid rgba(128,128,128,.35);border-radius:14px;background:rgba(128,128,128,.06)';
+   const rh=document.createElement('h4');rh.className='lesson-translatable';rh.textContent=rule.title;block.append(rh);
+   const rp=document.createElement('p');rp.className='lesson-translatable';rp.textContent=rule.text;rp.style.lineHeight='1.9';block.append(rp);
+   const ex=document.createElement('p');ex.className='lesson-translatable';ex.textContent='أمثلة: '+rule.examples.join(' | ');ex.style.whiteSpace='pre-wrap';ex.style.lineHeight='1.8';block.append(ex);
+   wrap.append(block);
+  });
+  $('lessonDetailContent').append(wrap);
  }
- const key=document.createElement('div');key.className='keypoint';key.textContent='⭐ خلاصة الدرس: '+data.key;
+ const key=document.createElement('div');key.className='keypoint lesson-translatable';key.textContent='⭐ خلاصة الدرس: '+data.key;
  const actions=document.createElement('div');actions.className='detail-actions';
- const translate=document.createElement('button');translate.className='subtle';translate.textContent=showTranslation?'إلغاء الترجمة':'ترجمة الشرح';translate.onclick=()=>openExplanation(name,!showTranslation);actions.append(translate);
+ const toEnglish=document.createElement('button');toEnglish.className='subtle';toEnglish.textContent='ترجمة إلى الإنجليزية';toEnglish.onclick=()=>translateLessonContent('ar|en');
+ const toArabic=document.createElement('button');toArabic.className='subtle';toArabic.textContent='ترجمة إلى العربية';toArabic.onclick=()=>translateLessonContent('en|ar');
+ const reset=document.createElement('button');reset.className='subtle';reset.textContent='إلغاء الترجمة';reset.dataset.translationReset='true';reset.hidden=true;reset.onclick=resetLessonTranslation;
  const quiz=document.createElement('button');quiz.textContent='ابدأ اختبار الدرس';quiz.disabled=!BANK[name];quiz.title=BANK[name]?'':'التدريب لهذا الدرس سيضاف لاحقًا';quiz.onclick=()=>{if(BANK[name])start(name)};
  const back=document.createElement('button');back.className='subtle';back.textContent='العودة لكل الدروس';back.onclick=()=>show('lessons');
  const print=document.createElement('button');print.className='subtle';print.textContent='طباعة الشرح';print.onclick=()=>window.print();
- actions.append(quiz,back,print);$('lessonDetailContent').append(key,actions);
+ actions.append(toEnglish,toArabic,reset,quiz,back,print);$('lessonDetailContent').append(key,actions);
  show('lessonDetail');window.scrollTo({top:0,behavior:'smooth'});
 }
-
 const lessonCards=document.getElementById('lessonCards');
 let current=[],answers={},index=0,lesson='';
 const $=id=>document.getElementById(id);

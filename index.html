@@ -352,7 +352,7 @@ function manwEnglishQuestions(entries) {
     const distractorWords=allWords.filter(x=>x!==word);
     const wrongMeaning=makeOptions(meaning,distractorMeanings).slice(1);
     const wrongWords=makeOptions(word,distractorWords).slice(1);
-    const sentence=example.replace(new RegExp("\\b"+word.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\const progressKey='manw_learning_progress_v1';")+"\\b","i"),"________");
+    const sentence=example.replace(word,"________");
     questions.push({q:"Choose the correct Arabic meaning of: "+word,a:meaning,o:makeOptions(meaning,[...wrongMeaning,...meanings])});
     questions.push({q:"Complete the sentence: "+sentence,a:word,o:makeOptions(word,[...wrongWords,...allWords])});
     questions.push({q:"Choose the English word that means: "+meaning,a:word,o:makeOptions(word,[...wrongWords,...allWords])});

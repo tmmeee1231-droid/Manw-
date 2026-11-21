@@ -591,7 +591,7 @@ function openExplanation(name){
  $('lessonDetailContent').innerHTML='';
  const head=document.createElement('div');head.className='detail-head';
  const h=document.createElement('h2');h.className='lesson-translatable';h.textContent='📖 شرح درس: '+name;
- const art=document.createElement('img');art.className='detail-hero-art';art.src=window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;
+ const art=document.createElement('img');art.className='detail-hero-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;
  const intro=document.createElement('p');intro.className='small lesson-translatable';intro.textContent=data.intro;
  head.append(h,art,intro);$('lessonDetailContent').append(head);
  data.sections.forEach(([title,items])=>{
@@ -784,6 +784,9 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   <label>المادة</label><input id="msLessonSubject" maxlength="80" list="msSubjectOptions" placeholder="مثال: الأحياء أو الفيزياء" value="الأحياء"><datalist id="msSubjectOptions"></datalist>
   <div class="ms-actions"><input id="msNewSubject" maxlength="80" placeholder="اسم مادة جديدة"><button type="button" class="secondary" id="msAddSubject">➕ إضافة مادة للقائمة</button></div>
   <label>اسم الدرس</label><input id="msLessonTitle" maxlength="120" placeholder="مثال: الجهاز العصبي">
+  <label>🖼️ صورة الدرس</label><p class="ms-muted">اختار صورة من موبايلك، وهتظهر للطلاب على كارت الدرس وداخل الشرح.</p>
+  <input id="msLessonImage" type="file" accept="image/*">
+  <div class="ms-actions"><img id="msLessonImagePreview" alt="معاينة صورة الدرس" style="display:none;width:min(100%,320px);max-height:190px;object-fit:cover;border-radius:12px;border:1px solid #8e1429"><button type="button" class="secondary" id="msRemoveLessonImage">إزالة صورة الدرس</button></div>
   <label>مقدمة الدرس</label><textarea id="msLessonIntro" rows="3" maxlength="3000" placeholder="اكتب مقدمة الدرس..."></textarea>
   <label>عناوين الأقسام ومحتواها (كل نقطة في سطر، واستخدم عنوانًا يبدأ بـ ##)</label>
   <textarea id="msLessonSections" rows="7" maxlength="12000" placeholder="## القسم الأول
@@ -843,15 +846,20 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    actions.append(edit,del);row.append(label,actions);box.appendChild(row);
   });
  }
+ let currentLessonImage='';
+ function showLessonImagePreview(src){const p=$('msLessonImagePreview');if(!p)return;if(src){p.src=src;p.style.display='block'}else{p.removeAttribute('src');p.style.display='none'}}
+ function compressLessonImage(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('تعذر قراءة الصورة.'));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('الصورة غير صالحة.'));img.onload=()=>{const scale=Math.min(1,1200/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/jpeg',.78))};img.src=reader.result};reader.readAsDataURL(file)})}
+ $('msLessonImage').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/')){alert('اختار ملف صورة.');e.target.value='';return}try{currentLessonImage=await compressLessonImage(file);showLessonImagePreview(currentLessonImage)}catch(err){alert(err.message);e.target.value=''}};
+ $('msRemoveLessonImage').onclick=()=>{currentLessonImage='';$('msLessonImage').value='';showLessonImagePreview('')};
  function fillLesson(name){
-  const d=customLessons[name]||{};const lesson=EXPLAIN[name]||{};const qs=BANK[name]||[];
+  const d=customLessons[name]||{};const lesson=EXPLAIN[name]||{};const qs=BANK[name]||[];currentLessonImage=d.imageData||'';$('msLessonImage').value='';showLessonImagePreview(currentLessonImage);
   $('msLessonEditId').value=name;$('msLessonSubject').value=d.subject||'الأحياء';$('msLessonTitle').value=name;$('msLessonIntro').value=d.intro??lesson.intro??'';$('msLessonKey').value=d.key??lesson.key??'';
   const sections=d.sections||lesson.sections||[];
   $('msLessonSections').value=sections.map(section=>'## '+section[0]+'\n'+(section[1]||[]).join('\n')).join('\n');
   renderQuestionEditor(qs.map(q=>({q:q.q||'',o:Array.isArray(q.o)?q.o.slice(0,4):[],a:q.a||''})));
   $('msLessonTitle').scrollIntoView({behavior:'smooth',block:'center'});
  }
- function clearLesson(){['msLessonEditId','msLessonTitle','msLessonIntro','msLessonSections','msLessonKey'].forEach(id=>$(id).value='');$('msLessonSubject').value='الأحياء';renderQuestionEditor([])}
+ function clearLesson(){['msLessonEditId','msLessonTitle','msLessonIntro','msLessonSections','msLessonKey','msLessonImage'].forEach(id=>$(id).value='');currentLessonImage='';showLessonImagePreview('');$('msLessonSubject').value='الأحياء';renderQuestionEditor([])}
  function renderQuestionEditor(items){
   const box=$('msQuestionEditor');box.innerHTML='';
   (items.length?items:[{q:'',o:['','','',''],a:''}]).forEach((item,index)=>{
@@ -923,7 +931,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    const oldName=$('msLessonEditId').value;
    if(oldName && oldName!==title){delete customLessons[oldName];if(!hiddenLessons.includes(oldName))hiddenLessons.push(oldName);}
    if(Object.prototype.hasOwnProperty.call(EXPLAIN,title) && !Object.prototype.hasOwnProperty.call(customLessons,title) && oldName!==title)throw new Error('يوجد درس أصلي بهذا الاسم؛ اختر اسمًا مختلفًا.');
-   customLessons[title]={subject,intro,sections,key,questions};
+   customLessons[title]={subject,intro,sections,key,questions,...(currentLessonImage?{imageData:currentLessonImage}:customLessons[title]?.imageData?{imageData:customLessons[title].imageData}:{})};
    if(!subjects.includes(subject))subjects.push(subject);
    hiddenLessons=hiddenLessons.filter(n=>n!==title);
    if(save(SUBJECTS_DB,subjects)&&save(LESSON_DB,customLessons)&&save(HIDDEN_LESSONS_DB,hiddenLessons)){applyCustomLessons();renderAdminLessons();clearLesson();alert('تم حفظ الدرس والتدريبات داخل مادة '+subject+'.');}

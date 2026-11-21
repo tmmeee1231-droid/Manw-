@@ -1311,7 +1311,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   };
   $('manwStudentSearch').addEventListener('input',refresh);await refresh();
  }
- sb.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){await inspectSession(session);if(session)await saveStudentDetails()}});
+ sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){setTimeout(async()=>{await inspectSession(session);if(session)await saveStudentDetails()},0)}});
  sb.auth.getSession().then(({data})=>inspectSession(data.session));
 })();
 </script>

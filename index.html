@@ -529,34 +529,52 @@ function updateStats(){
 async function translateLessonContent(lang){
  const root=$('lessonDetailContent');
  const nodes=[...root.querySelectorAll('.lesson-translatable')];
- if(!nodes.length)return;
- const status=document.createElement('p');status.className='small translation-status';status.textContent=lang==='ar|en'?'جارٍ ترجمة الشرح إلى الإنجليزية...':'جارٍ ترجمة الشرح إلى العربية...';
- const actions=root.querySelector('.detail-actions');if(actions)root.insertBefore(status,actions);
+ if(!nodes.length||root.dataset.translating==='true')return;
+ root.dataset.translating='true';
+ const buttons=[...root.querySelectorAll('.detail-actions button')];
+ buttons.forEach(button=>button.disabled=true);
+ let status=root.querySelector('.translation-status');
+ if(!status){status=document.createElement('p');status.className='small translation-status';const actions=root.querySelector('.detail-actions');if(actions)root.insertBefore(status,actions);else root.append(status);}
+ status.textContent=lang==='ar|en'?'جارٍ ترجمة المحتوى إلى الإنجليزية...':'جارٍ ترجمة المحتوى إلى العربية...';
  const cache=window.MANW_TRANSLATION_CACHE||(window.MANW_TRANSLATION_CACHE={});
+ const splitText=(value,max=430)=>{
+  const parts=[];let rest=value;
+  while(rest.length>max){let cut=rest.lastIndexOf(' ',max);if(cut<max*.55)cut=max;parts.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}
+  if(rest)parts.push(rest);return parts;
+ };
  let done=0,failed=0;
  for(const node of nodes){
-  const original=node.dataset.originalText||node.textContent;
-  node.dataset.originalText=original;
-  const key=lang+'|'+original;
+  const original=node.dataset.originalText!==undefined?node.dataset.originalText:node.textContent;
+  if(node.dataset.originalText===undefined)node.dataset.originalText=original;
+  if(!original.trim())continue;
   try{
-   let translated=cache[key];
-   if(!translated){
-    const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(original.slice(0,480))+'&langpair='+lang;
-    const response=await fetch(url);
-    if(!response.ok)throw new Error('translation service');
-    const json=await response.json();
-    translated=json?.responseData?.translatedText;
-    if(!translated)throw new Error('empty translation');
-    cache[key]=translated;
+   const chunks=splitText(original);
+   const translatedParts=[];
+   for(const part of chunks){
+    const key=lang+'|'+part;
+    let translated=cache[key];
+    if(!translated){
+     const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(part)+'&langpair='+lang;
+     const response=await fetch(url,{headers:{'Accept':'application/json'}});
+     if(!response.ok)throw new Error('HTTP '+response.status);
+     const json=await response.json();
+     translated=json?.responseData?.translatedText;
+     if(!translated||json?.responseStatus&&Number(json.responseStatus)>=400)throw new Error('Translation unavailable');
+     cache[key]=translated;
+    }
+    translatedParts.push(translated);
    }
-   node.textContent=translated;
+   node.textContent=translatedParts.join(' ');
    node.dir=lang==='ar|en'?'ltr':'rtl';
+   node.lang=lang==='ar|en'?'en':'ar';
    done++;
-  }catch(e){failed++}
+  }catch(error){failed++;node.textContent=original;node.dir='auto';}
+  status.textContent='تمت ترجمة '+done+' من '+nodes.length+' جزء...';
  }
- if(status.isConnected)status.textContent=failed?('اتترجم '+done+' جزء، وتعذر ترجمة '+failed+' أجزاء. جرّب مرة أخرى بعد قليل.'):'اكتملت الترجمة.';
- const reset=root.querySelector('[data-translation-reset]');
- if(reset)reset.hidden=false;
+ status.textContent=failed?'تمت ترجمة '+done+' جزء، وتعذرت ترجمة '+failed+' أجزاء. اضغط زر الاتجاه مرة أخرى لإعادة المحاولة.':'اكتملت الترجمة بنجاح.';
+ const reset=root.querySelector('[data-translation-reset]');if(reset)reset.hidden=false;
+ buttons.forEach(button=>button.disabled=false);
+ root.dataset.translating='false';
 }
 function resetLessonTranslation(){
  const root=$('lessonDetailContent');

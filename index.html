@@ -1007,6 +1007,9 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   <input id="msLessonEditId" type="hidden">
   <label>المادة</label><input id="msLessonSubject" maxlength="80" list="msSubjectOptions" placeholder="مثال: الأحياء أو الفيزياء" value="الأحياء"><datalist id="msSubjectOptions"></datalist>
   <div class="ms-actions"><input id="msNewSubject" maxlength="80" placeholder="اسم مادة جديدة"><button type="button" class="secondary" id="msAddSubject">➕ إضافة مادة للقائمة</button></div>
+  <h4 style="margin-top:18px">📚 إدارة المواد</h4>
+  <p class="ms-muted">حذف المادة يخفيها من الطلاب فقط، مع الاحتفاظ بالدروس والتدريبات. يمكنك استعادتها في أي وقت.</p>
+  <div id="msAdminSubjects"></div>
   <label>اسم الدرس</label><input id="msLessonTitle" maxlength="120" placeholder="مثال: الجهاز العصبي">
   <label>🖼️ صورة الدرس</label><p class="ms-muted">اختار صورة من موبايلك، وهتظهر للطلاب على كارت الدرس وداخل الشرح.</p>
   <input id="msLessonImage" type="file" accept="image/*">
@@ -1031,17 +1034,57 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  const $=id=>root.querySelector('#'+id);
  const LESSON_DB='manw_custom_lessons_v1';
  const SUBJECTS_DB='manw_subjects_v1';
+ const ARCHIVED_SUBJECTS_DB='manw_archived_subjects_v1';
  const HIDDEN_LESSONS_DB='manw_hidden_original_lessons_v1';
  let subjects=read(SUBJECTS_DB,['الأحياء','اللغة الإنجليزية']);if(!Array.isArray(subjects))subjects=['الأحياء'];
+ let archivedSubjects=read(ARCHIVED_SUBJECTS_DB,[]);if(!Array.isArray(archivedSubjects))archivedSubjects=[];
  let hiddenLessons=read(HIDDEN_LESSONS_DB,[]);if(!Array.isArray(hiddenLessons))hiddenLessons=[];
  let customLessons=read(LESSON_DB,{});
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
  window.MANW_CUSTOM_LESSONS=customLessons;
+ function allSubjectNames(){
+  return [...new Set(['الأحياء','اللغة الإنجليزية',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+ }
  function renderSubjects(){
-  const names=[...new Set(['الأحياء','اللغة الإنجليزية',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  const names=allSubjectNames(),active=names.filter(n=>!archivedSubjects.includes(n));
   const student=document.getElementById('studentSubject'),admin=$('msSubjectOptions');
-  if(student){const keep=student.value||'الأحياء';student.innerHTML='';names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;student.appendChild(o)});student.value=names.includes(keep)?keep:'الأحياء';if(typeof selectedSubject!=='undefined')selectedSubject=student.value;}
+  if(student){
+   const keep=student.value||'الأحياء';student.innerHTML='';
+   active.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;student.appendChild(o)});
+   if(!active.length){const o=document.createElement('option');o.value='';o.textContent='لا توجد مواد متاحة حاليًا';student.appendChild(o)}
+   student.value=active.includes(keep)?keep:(active[0]||'');
+   student.disabled=!active.length;
+   if(typeof selectedSubject!=='undefined')selectedSubject=student.value;
+  }
   if(admin){admin.innerHTML='';names.forEach(n=>{const o=document.createElement('option');o.value=n;admin.appendChild(o)})}
+ }
+ function renderAdminSubjects(){
+  const box=$('msAdminSubjects');if(!box)return;box.innerHTML='';
+  const names=allSubjectNames().sort((a,b)=>a.localeCompare(b,'ar'));
+  if(!names.length){box.textContent='لا توجد مواد.';return}
+  names.forEach(name=>{
+   const archived=archivedSubjects.includes(name);
+   const row=document.createElement('div');row.className='ms-product-row';
+   const lessonCount=Object.values(customLessons).filter(d=>d&&d.subject===name).length+
+    Object.keys(EXPLAIN).filter(n=>lessonSubject(n)===name&&!customLessons[n]).length;
+   const label=document.createElement('span');
+   label.textContent=name+' — '+lessonCount+' درس — '+(archived?'مؤرشفة':'نشطة');
+   const action=document.createElement('span');
+   const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';
+   toggle.textContent=archived?'استعادة المادة':'حذف المادة';
+   toggle.onclick=()=>{
+    if(archived){archivedSubjects=archivedSubjects.filter(n=>n!==name)}
+    else{
+     if(!confirm('إخفاء مادة «'+name+'» من الطلاب؟ لن تُحذف الدروس أو التدريبات، ويمكن استعادتها لاحقًا.'))return;
+     if(!archivedSubjects.includes(name))archivedSubjects.push(name);
+    }
+    if(save(ARCHIVED_SUBJECTS_DB,archivedSubjects)){
+     renderSubjects();renderAdminSubjects();
+     if(typeof buildLessonCards==='function')buildLessonCards(document.getElementById('lessonSearch')?.value||'');
+    }else alert('تعذر حفظ التغيير في هذا المتصفح.');
+   };
+   action.appendChild(toggle);row.append(label,action);box.appendChild(row);
+  });
  }
  function applyCustomLessons(){
   window.MANW_CUSTOM_LESSONS=customLessons;
@@ -1131,7 +1174,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  function fileData(file,max=1800000){return new Promise((resolve,reject)=>{if(!file)return resolve('');if(!file.type.startsWith('image/'))return reject(new Error('اختر ملف صورة فقط.'));if(file.size>max)return reject(new Error('الصورة كبيرة؛ الحد الأقصى 1.8MB.'));const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(new Error('تعذرت قراءة الصورة.'));r.readAsDataURL(file)})}
  $('msAdminOpen').onclick=()=>{$('msLogin').classList.toggle('ms-hidden');$('msPass').focus()};
 
- $('msLoginBtn').onclick=async()=>{const ok=await checkPass($('msPass').value);if(ok){logged=true;$('msLogin').classList.add('ms-hidden');$('msPanel').classList.remove('ms-hidden');$('msPass').value='';renderAdminProducts();renderAdminLessons();loadSettingsForm()}else $('msLoginMsg').textContent='كلمة المرور غير صحيحة.'};
+ $('msLoginBtn').onclick=async()=>{const ok=await checkPass($('msPass').value);if(ok){logged=true;$('msLogin').classList.add('ms-hidden');$('msPanel').classList.remove('ms-hidden');$('msPass').value='';renderAdminProducts();renderAdminLessons();renderAdminSubjects();loadSettingsForm()}else $('msLoginMsg').textContent='كلمة المرور غير صحيحة.'};
  $('msPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('msLoginBtn').click()});
  $('msLogout').onclick=()=>{logged=false;$('msPanel').classList.add('ms-hidden');$('msLogin').classList.remove('ms-hidden');$('msPass').value=''};
  $('msSaveProduct').onclick=async()=>{try{const name=$('msName').value.trim(),price=Number($('msPrice').value);if(!name||!Number.isFinite(price)||price<0)throw new Error('اكتب اسم المنتج وسعرًا صحيحًا.');let image=$('msImageUrl').value.trim();const uploaded=await fileData($('msImageFile').files[0]);if(uploaded)image=uploaded;const id=$('msEditId').value||('p_'+crypto.randomUUID());const old=products.find(p=>p.id===id);const item={id,name,category:$('msCategory').value,price,description:$('msDescription').value.trim(),numbers:$('msNumbers').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),image,available:$('msAvailable').checked};products=old?products.map(p=>p.id===id?item:p):[item,...products];if(save(DB,products)){clearProduct();renderAdminProducts();renderProducts();alert('تم حفظ المنتج.')}}catch(e){alert(e.message)}};
@@ -1165,9 +1208,10 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   }catch(e){alert(e.message)}
  };
  $('msClearLesson').onclick=clearLesson;
- $('msAddSubject').onclick=()=>{const name=$('msNewSubject').value.trim();if(!name)return alert('اكتب اسم المادة أولًا.');if(subjects.includes(name))return alert('المادة موجودة بالفعل.');subjects.push(name);if(save(SUBJECTS_DB,subjects)){renderSubjects();$('msLessonSubject').value=name;$('msNewSubject').value='';alert('تمت إضافة المادة. دلوقتي تقدر تضيف دروسها.')}};
+ $('msAddSubject').onclick=()=>{const name=$('msNewSubject').value.trim();if(!name)return alert('اكتب اسم المادة أولًا.');if(allSubjectNames().includes(name)&&!archivedSubjects.includes(name))return alert('المادة موجودة بالفعل.');if(archivedSubjects.includes(name)){archivedSubjects=archivedSubjects.filter(n=>n!==name);save(ARCHIVED_SUBJECTS_DB,archivedSubjects)}if(!subjects.includes(name))subjects.push(name);if(save(SUBJECTS_DB,subjects)){renderSubjects();renderAdminSubjects();$('msLessonSubject').value=name;$('msNewSubject').value='';alert('تمت إضافة المادة أو استعادتها.')}};
  $('msAddQuestion').onclick=()=>{const items=collectQuestionEditor();items.push({q:'',o:['','','',''],a:''});renderQuestionEditor(items)};
  renderSubjects();
+ renderAdminSubjects();
  renderQuestionEditor([]);
  setTheme();renderProducts();
 

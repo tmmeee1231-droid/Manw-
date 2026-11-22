@@ -58,12 +58,12 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $function$
   select exists (
     select 1 from public.student_profiles
     where user_id = auth.uid() and role = 'admin'
   );
-$;
+$function$;
 revoke all on function public.manw_is_admin() from public, anon;
 grant execute on function public.manw_is_admin() to authenticated;
 

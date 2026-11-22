@@ -1762,8 +1762,9 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    chatRecorder.onstop=async()=>{
     stream.getTracks().forEach(t=>t.stop());
     const blob=new Blob(chatVoiceChunks,{type:chatRecorder.mimeType||'audio/webm'});
+    const normalizedType=(blob.type||'audio/webm').split(';')[0];
     voiceStop.hidden=true;voiceStart.disabled=!currentProfile;voiceStatus.textContent='جاري إرسال التسجيل…';
-    try{const ext=(blob.type.includes('ogg')?'ogg':blob.type.includes('mp4')?'mp4':'webm');const file=new File([blob],'voice-'+Date.now()+'.'+ext,{type:blob.type||'audio/webm'});await uploadChatMedia(file,blob.type||'audio/webm');voiceStatus.textContent='تم إرسال التسجيل.'}
+    try{const ext=(normalizedType.includes('ogg')?'ogg':normalizedType.includes('mp4')?'mp4':'webm');const file=new File([blob],'voice-'+Date.now()+'.'+ext,{type:normalizedType});await uploadChatMedia(file,normalizedType);voiceStatus.textContent='تم إرسال التسجيل.'}
     catch(e){chatStatus.textContent='تعذر إرسال الصوت: '+(e.message||'حاول مرة أخرى');voiceStatus.textContent=''}
    };
    chatRecorder.start();voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';

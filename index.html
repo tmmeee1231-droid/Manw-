@@ -1262,6 +1262,7 @@ $('again').onclick=()=>start(lesson);
 $('back').onclick=()=>{quizFinished=false;show('lessons')};
 
 </script>
+<script src="math-prep3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // MANW STORE + LOCAL OWNER PANEL. Keep the learning platform above intact.
@@ -1372,7 +1373,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
  window.MANW_CUSTOM_LESSONS=customLessons;
  function allSubjectNames(){
-  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء','رياضيات تالتة إعدادي – الترم الأول',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
  }
  function renderSubjects(){
   const names=allSubjectNames(),active=names.filter(n=>!archivedSubjects.includes(n));

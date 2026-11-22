@@ -1767,7 +1767,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
     try{const ext=(normalizedType.includes('ogg')?'ogg':normalizedType.includes('mp4')?'mp4':'webm');const file=new File([blob],'voice-'+Date.now()+'.'+ext,{type:normalizedType});await uploadChatMedia(file,normalizedType);voiceStatus.textContent='تم إرسال التسجيل.'}
     catch(e){chatStatus.textContent='تعذر إرسال الصوت: '+(e.message||'حاول مرة أخرى');voiceStatus.textContent=''}
    };
-   chatRecorder.start();voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';
+   chatRecorder.start(1000);voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';
   }catch(e){chatStatus.textContent=e.message||'تعذر تشغيل الميكروفون.'}
  });
  voiceStop?.addEventListener('click',()=>{if(chatRecorder&&chatRecorder.state!=='inactive'){voiceStop.disabled=true;chatRecorder.stop();voiceStop.disabled=false}});

@@ -56,4 +56,18 @@ using (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+
+-- Allow each student to delete only their own chat rows.
+drop policy if exists "students delete own or expired messages"
+on public.subject_chat_messages;
+
+create policy "students delete own or expired messages"
+on public.subject_chat_messages
+for delete
+to authenticated
+using (
+  user_id = auth.uid()
+  or created_at < now() - interval '5 hours'
+);
+
 notify pgrst, 'reload schema';

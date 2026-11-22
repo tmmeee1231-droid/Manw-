@@ -890,6 +890,7 @@ MANW_PHYSICS_DATA.forEach((item,i)=>{
  const name=item.name;
  window.MANW_LESSON_META[name]={subject:"الفيزياء",unit:item.unit,kind:item.kind};
  window.MANW_PHYSICS_IMAGE_MAP[name]=LESSON_IMAGES[i%LESSON_IMAGES.length];
+ window.MANW_ENGLISH_IMAGE_MAP[name]=window.MANW_PHYSICS_IMAGE_MAP[name];
  EXPLAIN[name]={intro:item.intro,sections:item.sections,key:item.key};
  BANK[name]=item.questions;
 });
@@ -1194,7 +1195,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
  window.MANW_CUSTOM_LESSONS=customLessons;
  function allSubjectNames(){
-  return [...new Set(['الأحياء','اللغة الإنجليزية',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
  }
  function renderSubjects(){
   const names=allSubjectNames(),active=names.filter(n=>!archivedSubjects.includes(n));

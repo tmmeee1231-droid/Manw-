@@ -52,16 +52,25 @@ create index if not exists subject_chat_messages_subject_created
 alter table public.student_profiles enable row level security;
 alter table public.subject_chat_messages enable row level security;
 
+create or replace function public.manw_is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1 from public.student_profiles
+    where user_id = auth.uid() and role = 'admin'
+  );
+$;
+revoke all on function public.manw_is_admin() from public, anon;
+grant execute on function public.manw_is_admin() to authenticated;
+
 drop policy if exists "students read own profile or admins read all" on public.student_profiles;
 create policy "students read own profile or admins read all"
 on public.student_profiles for select to authenticated
-using (
-  user_id = auth.uid()
-  or exists (
-    select 1 from public.student_profiles me
-    where me.user_id = auth.uid() and me.role = 'admin'
-  )
-);
+using (user_id = auth.uid() or public.manw_is_admin());
 
 drop policy if exists "students update own basic profile" on public.student_profiles;
 create policy "students update own basic profile"

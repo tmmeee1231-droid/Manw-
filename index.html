@@ -427,11 +427,12 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
 <main class="wrap">
 <section class="student-auth wrap" id="manwStudentAuth" aria-label="حساب الطالب">
  <h2>👤 حساب الطالب</h2>
- <p class="small">سجّل بحساب Google لحفظ حسابك ومتابعة درجاتك. استخدم اسمك ورقم موبايلك.</p>
- <label for="manwStudentName">الاسم</label><input id="manwStudentName" maxlength="100" autocomplete="name" placeholder="اسم الطالب">
- <label for="manwStudentPhone">رقم الموبايل</label><input id="manwStudentPhone" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx">
- <div class="auth-actions"><button type="button" id="manwGoogleLogin">المتابعة باستخدام Google</button><button type="button" class="subtle" id="manwSignOut" hidden>تسجيل الخروج</button></div>
- <div class="auth-status" id="manwAuthStatus" role="status">لم تسجل الدخول بعد.</div>
+ <p class="small">اعمل حساب باسم مستخدم وكلمة سر. استخدم نفس البيانات كل مرة تدخل فيها. الاسم يكون ظاهرًا للطلاب في المحادثات.</p>
+ <label for="manwStudentName">اسم المستخدم / الاسم الظاهر</label><input id="manwStudentName" maxlength="40" autocomplete="username" placeholder="اكتب اسمك الذي ستسجل به">
+ <label for="manwStudentPassword">كلمة السر</label><input id="manwStudentPassword" type="password" minlength="8" maxlength="72" autocomplete="current-password" placeholder="8 أحرف على الأقل">
+ <label for="manwStudentPhone">رقم الموبايل (اختياري)</label><input id="manwStudentPhone" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx">
+ <div class="auth-actions"><button type="button" id="manwStudentLogin">تسجيل الدخول</button><button type="button" class="subtle" id="manwStudentSignup">إنشاء حساب جديد</button><button type="button" class="subtle" id="manwSignOut" hidden>تسجيل الخروج</button></div>
+ <div class="auth-status" id="manwAuthStatus" role="status">لو أول مرة، اختار «إنشاء حساب جديد».</div>
 </section>
 
 
@@ -1550,39 +1551,74 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  const SUPABASE_KEY='sb_publishable_9ixbR2bKr6grtITmojcITA_OgC5_ngM';
  const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  const $=id=>document.getElementById(id);
- const status=$('manwAuthStatus'),login=$('manwGoogleLogin'),logout=$('manwSignOut');
+ const status=$('manwAuthStatus'),login=$('manwStudentLogin'),signup=$('manwStudentSignup'),logout=$('manwSignOut');
  let currentProfile=null;
  const say=t=>{status.textContent=t};
+ const usernameEmail=async value=>{
+  const normalized=value.trim().normalize('NFKC').toLocaleLowerCase();
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normalized));
+  const key=Array.from(new Uint8Array(digest).slice(0,20),b=>b.toString(16).padStart(2,'0')).join('');
+  return 'u'+key+'@manw.local';
+ };
  async function inspectSession(session){
-  if(!session){currentProfile=null;login.hidden=false;logout.hidden=true;say('لم تسجل الدخول بعد.');return}
+  if(!session){currentProfile=null;login.hidden=false;signup.hidden=false;logout.hidden=true;say('لم تسجل الدخول بعد. لو أول مرة اختار إنشاء حساب جديد.');return}
   const user=session.user;
   const {data:profile,error}=await sb.from('student_profiles').select('user_id,full_name,phone,role,is_banned,created_at').eq('user_id',user.id).maybeSingle();
   if(error){say('تعذر قراءة ملف الطالب: '+error.message);return}
-  if(!profile){say('تم تسجيل الدخول، لكن ملف الطالب لم يظهر بعد. حدّث الصفحة بعد قليل.');return}
-  if(profile.is_banned){await sb.auth.signOut();currentProfile=null;login.hidden=false;logout.hidden=true;say('هذا الحساب محظور من دخول المنصة. لو تعتقد أن ده خطأ تواصل مع الإدارة.');return}
-  currentProfile=profile;login.hidden=true;logout.hidden=false;
-  $('manwStudentName').value=profile.full_name||user.user_metadata?.full_name||user.user_metadata?.name||'';
+  if(!profile){say('تم تسجيل الدخول، لكن ملف الطالب لم يظهر بعد. تواصل مع الإدارة.');return}
+  if(profile.is_banned){await sb.auth.signOut();currentProfile=null;login.hidden=false;signup.hidden=false;logout.hidden=true;say('هذا الحساب محظور من دخول المنصة. لو تعتقد أن ده خطأ تواصل مع الإدارة.');return}
+  currentProfile=profile;login.hidden=true;signup.hidden=true;logout.hidden=false;
+  $('manwStudentName').value=profile.full_name||user.user_metadata?.full_name||'';
   $('manwStudentPhone').value=profile.phone||'';
-  say('أهلاً '+(profile.full_name||user.email||'بالطالب')+' — الحساب نشط.');
+  $('manwStudentPassword').value='';
+  say('أهلاً '+(profile.full_name||'بالطالب')+' — الحساب نشط.');
   if(profile.role==='admin') renderStudentAdmin();
   else document.getElementById('manwStudentAdmin')?.remove();
  }
+ async function studentCredentials(){
+  const name=$('manwStudentName').value.trim(),password=$('manwStudentPassword').value;
+  if(name.length<3||name.length>40)throw new Error('اسم المستخدم لازم يكون من 3 إلى 40 حرفًا.');
+  if(!password||password.length<8)throw new Error('كلمة السر لازم تكون 8 أحرف على الأقل.');
+  if(password.length>72)throw new Error('كلمة السر طويلة جدًا.');
+  const phone=$('manwStudentPhone').value.trim();
+  if(phone&&!/^[0-9+()\\s-]{8,20}$/.test(phone))throw new Error('راجع رقم الموبايل أو اتركه فارغًا.');
+  return {name,password,phone,email:await usernameEmail(name)};
+ }
+ signup.addEventListener('click',async()=>{
+  signup.disabled=true;login.disabled=true;
+  try{
+   const {name,password,phone,email}=await studentCredentials();
+   say('جاري إنشاء الحساب…');
+   const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,phone}}});
+   if(error)throw error;
+   if(!data.session){say('تم إرسال طلب إنشاء الحساب، لكن تأكيد البريد مفعّل في إعدادات Supabase. لازم الإدارة توقف تأكيد البريد حتى تعمل حسابات الاسم وكلمة السر بدون بريد.');return}
+   await inspectSession(data.session);
+   await saveStudentDetails();
+   chatAuthState();await loadSubjectChat();
+  }catch(e){say('تعذر إنشاء الحساب: '+(e.message||'حاول مرة أخرى.'))}
+  finally{signup.disabled=false;login.disabled=false}
+ });
  login.addEventListener('click',async()=>{
-  const name=$('manwStudentName').value.trim(),phone=$('manwStudentPhone').value.trim();
-  if(!name||!phone){say('اكتب الاسم ورقم الموبايل أولاً.');return}
-  if(!/^[0-9+()\\s-]{8,20}$/.test(phone)){say('راجع رقم الموبايل.');return}
-  localStorage.setItem('manw_pending_student_profile',JSON.stringify({name,phone}));
-  say('جاري تحويلك إلى Google…');
-  const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]+'#lessons',queryParams:{prompt:'select_account'}}});
-  if(error)say('تعذر بدء تسجيل Google: '+error.message);
+  login.disabled=true;signup.disabled=true;
+  try{
+   const {name,password,email}=await studentCredentials();
+   say('جاري تسجيل الدخول…');
+   const {data,error}=await sb.auth.signInWithPassword({email,password});
+   if(error)throw error;
+   await inspectSession(data.session);
+   await saveStudentDetails();
+   chatAuthState();await loadSubjectChat();
+  }catch(e){say('تعذر تسجيل الدخول: '+(e.message==='Invalid login credentials'?'اسم المستخدم أو كلمة السر غير صحيحة.':e.message||'حاول مرة أخرى.'))}
+  finally{login.disabled=false;signup.disabled=false}
  });
  logout.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
  async function saveStudentDetails(){
   const {data:{user}}=await sb.auth.getUser();if(!user)return;
-  const pending=JSON.parse(localStorage.getItem('manw_pending_student_profile')||'null');
-  const name=$('manwStudentName').value.trim()||(pending?.name)||currentProfile?.full_name||'';
-  const phone=$('manwStudentPhone').value.trim()||(pending?.phone)||currentProfile?.phone||'';
-  if(name||phone){const {error}=await sb.from('student_profiles').update({full_name:name,phone}).eq('user_id',user.id);if(error)say('تم الدخول، لكن تعذر حفظ الاسم أو الهاتف: '+error.message);else{localStorage.removeItem('manw_pending_student_profile');say('تم حفظ بيانات حسابك.');}}
+  const name=$('manwStudentName').value.trim()||currentProfile?.full_name||'';
+  const phone=$('manwStudentPhone').value.trim()||currentProfile?.phone||'';
+  const {error}=await sb.from('student_profiles').update({full_name:name,phone}).eq('user_id',user.id);
+  if(error)say('دخلت الحساب، لكن تعذر حفظ الاسم أو الهاتف: '+error.message);
+  else say('تم حفظ بيانات حسابك.');
  }
  async function renderStudentAdmin(){
   const panel=document.getElementById('msPanel');if(!panel||document.getElementById('manwStudentAdmin'))return;

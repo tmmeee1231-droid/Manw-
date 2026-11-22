@@ -29,14 +29,14 @@ const makeBank=(id)=>{
  const out=[];
  const add=(question,answer,...wrong)=>out.push(q(question,answer,wrong.flat()));
  for(let i=1;i<=40;i++){
-  const n=i+2, m=i%5+2, k=i%4+2, x=i-20;
+  const n=i+2, m=i+3, k=i%4+2, x=i-20;
   switch(id){
   case 0:{const type=i%4;if(type===0)add(`بسّط: 2^${n} × 2^${m}`,`2^${n+m}`,[`2^${n*m}`,`2^${n-m}`,`2^${n}`]);else if(type===1)add(`بسّط: (3^${n})^${m}`,`3^${n*m}`,[`3^${n+m}`,`3^${n-m}`,`3^${n}`]);else if(type===2)add(`بسّط: 5^${n+m} ÷ 5^${m}`,`5^${n}`,[`5^${n+m}`,`5^${n*m}`,`5^${m}`]);else add(`ما قيمة 7^0؟`,'1',['0','7','−1']);break}
-  case 1:{const a=[2,3,5][i%3],e=i%6+2;add(`إذا كان ${a}^(x+${k}) = ${a}^${e+k}، فأوجد x.`,e,[e+1,e-1,e+2]);break}
+  case 1:{const a=[2,3,5][i%3],e=i+2;add(`إذا كان ${a}^(x+${k}) = ${a}^${e+k}، فأوجد x.`,e,[e+1,e-1,e+2]);break}
   case 2:{if(i%2)add(`إذا كانت f(x)=${n}x²−${m}x+${k}، فما معامل x²؟`,n,[m,k,0]);else{const v=x;add(`إذا كانت f(x)=x²+${n}x+${m}، فأوجد f(0).`,m,[n,0,m+n])}break}
   case 3:{const h=x,k2=i+1;add(`في الدالة f(x)=(x−(${h}))²+${k2}، ما إحداثيا الرأس؟`,`(${h}, ${k2})`,`(${-h}, ${k2})`,`(${h}, ${-k2})`);break}
-  case 4:{const a=i%6+1,b=i%5+1;add(`ما أصفار الدالة f(x)=(x−${a})(x+${b})؟`,`${a} ، −${b}`,[`−${a} ، ${b}`,`${a} ، ${b}`,`−${a} ، −${b}`]);break}
-  case 5:{const r=x||2;add(`ما القيمة المستبعدة من مجال الدالة 1/(x−(${r}))؟`,r,[r+1,r-1,0]);break}
+  case 4:{const a=i+1,b=i+2;add(`ما أصفار الدالة f(x)=(x−${a})(x+${b})؟`,`${a} ، −${b}`,[`−${a} ، ${b}`,`${a} ، ${b}`,`−${a} ، −${b}`]);break}
+  case 5:{const r=x===0?100:x;add(`ما القيمة المستبعدة من مجال الدالة 1/(x−(${r}))؟`,r,[r+1,r-1,0]);break}
   case 6:{const a=i+1,b=-(i+2);add(`المجال المشترك للدالتين 1/(x−${a}) و1/(x−(${b})) يستبعد:`,`${a} و ${b}`,[`${a} فقط`,`${b} فقط`,'لا يستبعد أي قيمة']);break}
   case 7:{const a=i+1,b=i+2;add(`بسّط جمع الكسرين ${a}/x + ${b}/x.`,`${a+b}/x`,[`${a*b}/x`,`${a-b}/x`,`${a+b}/(2x)`]);break}
   case 8:{const a=i+1,b=i+2;add(`بسّط: (${a}/x) × (x/${b})، حيث x≠0.`,`${a}/${b}`,[`${b}/${a}`,`${a*b}`,`x/${a+b}`]);break}

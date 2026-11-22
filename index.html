@@ -994,10 +994,26 @@ MANW_PHYSICS_DATA.forEach((lesson,i)=>{
 });
 
 window.MANW_PHYSICS_IMAGE_MAP = window.MANW_PHYSICS_IMAGE_MAP || {};
+function manwPhysicsDarkArt(item,index){
+ const motifs=[
+  '<path d="M250 65 L280 145 245 145 290 235 205 135 240 135Z" fill="#ff3b4e" stroke="#ffd2d7" stroke-width="4"/><circle cx="250" cy="150" r="112" fill="none" stroke="#8b1828" stroke-width="3"/>',
+  '<rect x="125" y="120" width="250" height="90" rx="12" fill="#171a25" stroke="#ff4658" stroke-width="7"/><path d="M145 165h35l20-28 35 56 35-56 35 56 20-28h35" fill="none" stroke="#f4b5bd" stroke-width="7"/><path d="M95 165h30m250 0h30" stroke="#ff4658" stroke-width="8"/>',
+  '<path d="M150 90v150m200-150v150M150 120h200M150 210h200" stroke="#ff4658" stroke-width="7" fill="none"/><path d="M165 200l35-55 35 30 35-70 35 45 30-35" stroke="#f4b5bd" stroke-width="6" fill="none"/><circle cx="250" cy="165" r="105" fill="none" stroke="#77202d" stroke-width="3"/>',
+  '<path d="M100 115h65l25-35 45 70 45-70 45 70 25-35h65M100 205h65l25-35 45 70 45-70 45 70 25-35h65" fill="none" stroke="#ff4658" stroke-width="7"/><circle cx="250" cy="160" r="18" fill="#ffd2d7"/>',
+  '<path d="M90 165h70m0 0v-65h180v65m-180 0v65h180v-65m0 0h70" stroke="#ff4658" stroke-width="7" fill="none"/><rect x="220" y="82" width="50" height="35" rx="6" fill="#24202b" stroke="#ffd2d7" stroke-width="4"/><rect x="220" y="213" width="50" height="35" rx="6" fill="#24202b" stroke="#ffd2d7" stroke-width="4"/>',
+  '<path d="M100 165h45l25-45 35 90 35-90 35 90 35-90 35 45h45" fill="none" stroke="#ff4658" stroke-width="8"/><path d="M250 65v-30m0 200v30" stroke="#ffd2d7" stroke-width="5"/><circle cx="250" cy="165" r="115" fill="none" stroke="#77202d" stroke-width="3"/>',
+  '<circle cx="250" cy="165" r="95" fill="none" stroke="#ff4658" stroke-width="8"/><path d="M250 55v220M140 165h220" stroke="#ffd2d7" stroke-width="5"/><path d="M250 165l75-55" stroke="#ff4658" stroke-width="10"/><circle cx="250" cy="165" r="14" fill="#fff0f2"/>',
+  '<rect x="120" y="100" width="260" height="130" rx="14" fill="#171a25" stroke="#ff4658" stroke-width="7"/><path d="M150 165h45l25-35 35 70 35-70 35 35h25" fill="none" stroke="#ffd2d7" stroke-width="6"/><path d="M250 65v35m0 130v35" stroke="#ff4658" stroke-width="6"/>',
+  '<circle cx="250" cy="160" r="105" fill="none" stroke="#ff4658" stroke-width="7"/><path d="M250 65v190M155 112l190 96M155 208l190-96" stroke="#ffd2d7" stroke-width="5"/><circle cx="250" cy="160" r="20" fill="#ff4658"/>',
+  '<path d="M110 100h280v130H110z" fill="#171a25" stroke="#ff4658" stroke-width="7"/><path d="M145 165h45l25-35 35 70 35-70 35 35h35" fill="none" stroke="#ffd2d7" stroke-width="6"/><path d="M250 65l-20 35h40z" fill="#ff4658"/>'
+ ];
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300"><defs><radialGradient id="bg"><stop stop-color="#35101a"/><stop offset="1" stop-color="#080a12"/></radialGradient><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#6c2634" stroke-opacity=".22"/></pattern></defs><rect width="500" height="300" fill="url(#bg)"/><rect width="500" height="300" fill="url(#grid)"/><circle cx="250" cy="160" r="130" fill="#120d16" stroke="#64202d" stroke-width="2"/>'+motifs[index%motifs.length]+'<path d="M20 20h22M20 20v22M480 20h-22M480 20v22M20 280h22M20 280v-22M480 280h-22M480 280v-22" stroke="#ff4658" stroke-width="3"/><text x="250" y="285" fill="#f4c5cb" font-size="13" text-anchor="middle" font-family="Arial,sans-serif" letter-spacing="3">MANW • PHYSICS</text></svg>';
+ return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
 MANW_PHYSICS_DATA.forEach((item,i)=>{
  const name=item.name;
  window.MANW_LESSON_META[name]={subject:"الفيزياء",unit:item.unit,kind:item.kind};
- window.MANW_PHYSICS_IMAGE_MAP[name]=LESSON_IMAGES[i%LESSON_IMAGES.length];
+ window.MANW_PHYSICS_IMAGE_MAP[name]=manwPhysicsDarkArt(item,i);
  window.MANW_ENGLISH_IMAGE_MAP[name]=window.MANW_PHYSICS_IMAGE_MAP[name];
  EXPLAIN[name]={intro:item.intro,sections:item.sections,key:item.key};
  BANK[name]=item.questions;

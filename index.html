@@ -147,6 +147,20 @@ background:linear-gradient(145deg,#1c1517,#100d0e);transition:transform .18s,bor
 .student-auth .auth-status{font-size:13px;color:#e8cdd1;margin-top:10px;white-space:pre-wrap}
 .student-admin-list{margin-top:12px}.student-admin-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #48202a;flex-wrap:wrap}
 .student-admin-row small{display:block;color:#c7b4b8}.student-admin-row button{padding:7px 12px;font-size:13px}
+
+/* MANW subject chat */
+.manw-chat-messages{height:min(48vh,430px);min-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px;margin:14px 0;background:#080b0a;border:1px solid #315846;border-radius:14px}
+.manw-chat-message{max-width:88%;align-self:flex-start;padding:10px 13px;border:1px solid #3a604c;border-radius:13px 13px 3px 13px;background:linear-gradient(145deg,#13251c,#0b1110);overflow-wrap:anywhere}
+.manw-chat-message.mine{align-self:flex-end;border-color:#8a263b;background:linear-gradient(145deg,#30101a,#160b0e);border-radius:13px 13px 13px 3px}
+.manw-chat-message strong{display:block;color:#e6b96f;font-size:13px}
+.manw-chat-message p{margin:4px 0;color:#fff;white-space:pre-wrap}
+.manw-chat-message time{display:block;color:#9baca2;font-size:11px}
+.chat-toolbar{display:grid;grid-template-columns:1fr;gap:6px}
+.manw-chat-form{display:flex;gap:9px;align-items:stretch}
+.manw-chat-form textarea{flex:1;min-width:0;resize:vertical;padding:12px;background:#080e0d;color:#edfff5;border:1px solid #315846;border-radius:12px;font:inherit}
+.manw-chat-form button{min-width:105px}
+@media(max-width:520px){.manw-chat-form{flex-direction:column}.manw-chat-form button{width:100%}.manw-chat-message{max-width:96%}}
+
 </style><style>
 
 /* MANW visual refresh: responsive red/black interface */
@@ -473,6 +487,24 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
 </section>
 <section id="lessonDetail" class="panel hidden">
 <div id="lessonDetailContent"></div>
+</section>
+
+
+<section id="studentChat" class="panel">
+ <span class="tag">MANW STUDENT CHAT</span>
+ <h2>💬 محادثات الطلاب حسب المادة</h2>
+ <p class="small">كل مادة لها غرفة مستقلة. الرسائل تُحذف تلقائيًا بعد 5 ساعات.</p>
+ <div class="chat-toolbar">
+  <label for="manwChatSubject">اختار المادة</label>
+  <select id="manwChatSubject" aria-label="مادة المحادثة"></select>
+ </div>
+ <div id="manwChatStatus" class="notice" role="status">سجّل الدخول بحساب الطالب للمشاركة في المحادثات.</div>
+ <div id="manwChatMessages" class="manw-chat-messages" aria-live="polite"><p class="small">سجّل الدخول لعرض رسائل الطلاب.</p></div>
+ <form id="manwChatForm" class="manw-chat-form">
+  <textarea id="manwChatInput" rows="2" maxlength="1000" placeholder="اكتب رسالتك للطلاب..." aria-label="رسالتك" disabled></textarea>
+  <button id="manwChatSend" type="submit" disabled>إرسال الرسالة</button>
+ </form>
+ <p class="small">ملاحظة: المحادثة متاحة للطلاب المسجلين فقط، والرسائل القديمة تُنظف دوريًا من قاعدة البيانات.</p>
 </section>
 
 <section id="store" class="panel">
@@ -1570,6 +1602,68 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   };
   $('manwStudentSearch').addEventListener('input',refresh);await refresh();
  }
+
+ // MANW subject rooms — backed by Supabase; messages expire after five hours.
+ const chatSubject=$('manwChatSubject'),chatMessages=$('manwChatMessages'),chatStatus=$('manwChatStatus');
+ const chatForm=$('manwChatForm'),chatInput=$('manwChatInput'),chatSend=$('manwChatSend');
+ let chatTimer=null,chatBusy=false;
+ const chatExpiryMs=5*60*60*1000;
+ function chatSubjects(){
+  const source=$('studentSubject');
+  const names=source?[...source.options].map(o=>o.value).filter(Boolean):['الأحياء','اللغة الإنجليزية','الفيزياء'];
+  const keep=chatSubject.value;chatSubject.innerHTML='';
+  names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;chatSubject.appendChild(o)});
+  if(names.includes(keep))chatSubject.value=keep;
+ }
+ function chatAuthState(){
+  const signed=!!currentProfile;
+  chatInput.disabled=!signed;chatSend.disabled=!signed;
+  chatStatus.textContent=signed?'أنت داخل بحساب طالب. اختار المادة وشارك في النقاش.':'سجّل الدخول بحساب الطالب بالأعلى للمشاركة في المحادثات.';
+ }
+ function chatTime(value){return new Date(value).toLocaleString('ar-EG',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'})}
+ async function loadSubjectChat(){
+  if(!chatMessages||chatBusy)return;
+  if(!currentProfile){chatMessages.innerHTML='<p class="small">سجّل الدخول لعرض رسائل الطلاب.</p>';return}
+  const subject=chatSubject.value;if(!subject)return;
+  chatBusy=true;
+  try{
+   const cutoff=new Date(Date.now()-chatExpiryMs).toISOString();
+   await sb.from('subject_chat_messages').delete().lt('created_at',cutoff);
+   const {data,error}=await sb.from('subject_chat_messages').select('id,subject,user_id,sender_name,body,created_at').eq('subject',subject).gte('created_at',cutoff).order('created_at',{ascending:true}).limit(200);
+   if(error)throw error;
+   chatMessages.innerHTML='';
+   if(!data?.length){const p=document.createElement('p');p.className='small';p.textContent='لسه مفيش رسائل في محادثة المادة دي. ابدأ النقاش!';chatMessages.appendChild(p)}
+   (data||[]).forEach(m=>{
+    const item=document.createElement('article');item.className='manw-chat-message'+(m.user_id===currentProfile.user_id?' mine':'');
+    const name=document.createElement('strong');name.textContent=m.sender_name||'طالب MANW';
+    const body=document.createElement('p');body.textContent=m.body;
+    const time=document.createElement('time');time.dateTime=m.created_at;time.textContent=chatTime(m.created_at);
+    item.append(name,body,time);chatMessages.appendChild(item);
+   });
+   chatMessages.scrollTop=chatMessages.scrollHeight;
+   chatStatus.textContent='غرفة '+subject+' · الرسائل تختفي بعد 5 ساعات من إرسالها.';
+  }catch(e){chatStatus.textContent='تعذر تحميل المحادثة: '+(e.message||'تحقق من إعداد قاعدة البيانات') }
+  finally{chatBusy=false}
+ }
+ chatSubject?.addEventListener('change',loadSubjectChat);
+ chatForm?.addEventListener('submit',async e=>{
+  e.preventDefault();const body=chatInput.value.trim();
+  if(!currentProfile){chatStatus.textContent='سجّل الدخول أولاً.';return}
+  if(!body||!chatSubject.value)return;
+  chatSend.disabled=true;
+  const {data:{user}}=await sb.auth.getUser();
+  const {error}=await sb.from('subject_chat_messages').insert({subject:chatSubject.value,user_id:user.id,sender_name:currentProfile.full_name||'طالب MANW',body});
+  if(error)chatStatus.textContent='تعذر إرسال الرسالة: '+error.message;
+  else{chatInput.value='';await loadSubjectChat()}
+  chatSend.disabled=false;
+ });
+ chatSubjects();chatAuthState();
+ const originalInspectSession=inspectSession;
+ // Refresh chat access whenever the login state changes.
+ const chatAuthInterval=setInterval(()=>{chatAuthState();},1500);
+ chatTimer=setInterval(loadSubjectChat,8000);
+ chatSubject?.addEventListener('focus',chatSubjects);
+
  sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){setTimeout(async()=>{await inspectSession(session);if(session)await saveStudentDetails()},0)}});
  sb.auth.getSession().then(({data})=>inspectSession(data.session));
 })();

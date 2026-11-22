@@ -1755,19 +1755,22 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  voiceStart?.addEventListener('click',async()=>{
   try{
    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw new Error('تسجيل الصوت غير مدعوم في هذا المتصفح. افتح الموقع عبر HTTPS أو استخدم متصفحًا أحدث.');
-   const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-   let mime='';for(const type of ['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4']){if(MediaRecorder.isTypeSupported(type)){mime=type;break}}
+   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+   let mime='';for(const type of ['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus']){if(MediaRecorder.isTypeSupported(type)){mime=type;break}}
    chatVoiceChunks=[];chatRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
-   chatRecorder.ondataavailable=e=>{if(e.data?.size)chatVoiceChunks.push(e.data)};
+   chatRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)chatVoiceChunks.push(e.data)};
+   chatRecorder.onerror=e=>{chatStatus.textContent='حصل خطأ أثناء التسجيل: '+(e.error?.message||'حاول مرة أخرى');stream.getTracks().forEach(t=>t.stop());voiceStop.hidden=true;voiceStart.disabled=!currentProfile};
    chatRecorder.onstop=async()=>{
     stream.getTracks().forEach(t=>t.stop());
-    const blob=new Blob(chatVoiceChunks,{type:chatRecorder.mimeType||'audio/webm'});
-    const normalizedType=(blob.type||'audio/webm').split(';')[0];
+    const actualType=chatRecorder.mimeType||chatVoiceChunks.find(c=>c.type)?.type||'audio/webm';
+    const blob=new Blob(chatVoiceChunks,{type:actualType});
+    if(!blob.size){voiceStatus.textContent='التسجيل فارغ. اسمح باستخدام الميكروفون وحاول مرة أخرى.';voiceStop.hidden=true;voiceStart.disabled=!currentProfile;return}
+    const normalizedType=actualType.split(';')[0];
     voiceStop.hidden=true;voiceStart.disabled=!currentProfile;voiceStatus.textContent='جاري إرسال التسجيل…';
     try{const ext=(normalizedType.includes('ogg')?'ogg':normalizedType.includes('mp4')?'mp4':'webm');const file=new File([blob],'voice-'+Date.now()+'.'+ext,{type:normalizedType});await uploadChatMedia(file,normalizedType);voiceStatus.textContent='تم إرسال التسجيل.'}
     catch(e){chatStatus.textContent='تعذر إرسال الصوت: '+(e.message||'حاول مرة أخرى');voiceStatus.textContent=''}
    };
-   chatRecorder.start(1000);voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';
+   chatRecorder.start();voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';
   }catch(e){chatStatus.textContent=e.message||'تعذر تشغيل الميكروفون.'}
  });
  voiceStop?.addEventListener('click',()=>{if(chatRecorder&&chatRecorder.state!=='inactive'){voiceStop.disabled=true;chatRecorder.stop();voiceStop.disabled=false}});

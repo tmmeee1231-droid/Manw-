@@ -27,7 +27,7 @@ const lessons=[
 const q=(question,answer,wrong)=>({q:question,a:String(answer),o:[String(answer),...wrong.map(String)].sort(()=>0.5-Math.random())});
 const makeBank=(id)=>{
  const out=[];
- const add=(question,answer,wrong)=>out.push(q(question,answer,wrong));
+ const add=(question,answer,...wrong)=>out.push(q(question,answer,wrong.flat()));
  for(let i=1;i<=40;i++){
   const n=i%9+2, m=i%5+2, k=i%4+2, x=i%7-3;
   switch(id){

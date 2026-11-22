@@ -889,7 +889,7 @@ const MANW_PHYSICS_DATA = [
 /* Build a full third-secondary practice set: 40 distinct MCQs per lesson. */
 function manwPhysicsExtraQuestions(lessonIndex){
  const out=[];
- const fmt=n=>Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));
+ const fmt=n=>typeof n==='number'?(Number.isInteger(n)?String(n):String(Number(n.toFixed(2)))):String(n);
  const add=(q,a,w)=>out.push({q,a:fmt(a),o:[fmt(a),...w.map(fmt)]});
  for(let n=1;n<=34;n++){
   const x=n+1;

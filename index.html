@@ -1595,7 +1595,10 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    await inspectSession(data.session);
    await saveStudentDetails();
    chatAuthState();await loadSubjectChat();
-  }catch(e){say('تعذر إنشاء الحساب: '+(e.message||'حاول مرة أخرى.'))}
+  }catch(e){
+   const message=e.message||'حاول مرة أخرى.';
+   say('تعذر إنشاء الحساب: '+(/already registered|already exists|user exists|duplicate key/i.test(message)?'اسم المستخدم ده مستخدم بالفعل. اختار اسمًا مختلفًا.':message));
+  }
   finally{signup.disabled=false;login.disabled=false}
  });
  login.addEventListener('click',async()=>{
@@ -1608,7 +1611,10 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    await inspectSession(data.session);
    await saveStudentDetails();
    chatAuthState();await loadSubjectChat();
-  }catch(e){say('تعذر تسجيل الدخول: '+(e.message==='Invalid login credentials'?'اسم المستخدم أو كلمة السر غير صحيحة.':e.message||'حاول مرة أخرى.'))}
+  }catch(e){
+   const message=e.message||'حاول مرة أخرى.';
+   say('تعذر تسجيل الدخول: '+(e.message==='Invalid login credentials'?'اسم المستخدم أو كلمة السر غير صحيحة.':message));
+  }
   finally{login.disabled=false;signup.disabled=false}
  });
  logout.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});

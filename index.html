@@ -426,7 +426,7 @@ header:before{border-color:#b34b58!important;box-shadow:inset 0 0 80px #8b001c33
 header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85d,transparent)!important}
 @media(max-width:650px){header{background-position:center center!important;background-size:cover!important}}
 </style>
-</head><body>
+<style id="manw-grade-voice-style">#manwStudentMaterials[hidden],#lessonCards[hidden]{display:none!important}#manwGradeGate{border-color:#398a67;background:linear-gradient(145deg,#0d211a,#0a0e0e);padding:18px}#manwGradeGate select{margin-top:8px}</style></head><body>
 <header><div class="wrap">
 <div class="manw-owner-wrap"><img id="manw-owner-photo" alt="صورة صاحب منصة MANW" hidden><div id="manw-owner-placeholder" aria-hidden="true">M</div></div><div class="kicker">MANW // STUDY TERMINAL</div>
 <div class="brand">𝕄𝔸ℕ𝕎</div>
@@ -490,7 +490,16 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
   <div class="stat"><strong id="completedCount">0</strong><span>اختبارات مكتملة</span></div>
   <div class="stat"><strong id="averageScore">—</strong><span>متوسط آخر النتائج</span></div>
 </div>
-<div class="toolbar">
+<div id="manwGradeGate" class="notice" style="margin:14px 0">
+ <h3 style="margin:0 0 8px;color:#65ffb2">🎓 أنت في سنة كام؟</h3>
+ <p class="small">اختار صفك الدراسي الأول علشان نظهرلك المواد الخاصة بيك بس.</p>
+ <select id="manwGradeSelect" aria-label="اختار الصف الدراسي">
+  <option value="">اختار السنة الدراسية</option>
+  <option value="prep3">تالتة إعدادي</option>
+  <option value="secondary">تالتة ثانوي</option>
+ </select>
+</div>
+<div class="toolbar" id="manwStudentMaterials" hidden>
   <label for="studentSubject" style="width:100%">📚 اختار المادة الأول</label>
   <select id="studentSubject" aria-label="اختار المادة"></select>
   <input id="lessonSearch" type="search" placeholder="ابحث باسم الدرس..." aria-label="ابحث باسم الدرس">
@@ -1144,7 +1153,7 @@ function openExplanation(name){
  $('lessonDetailContent').innerHTML='';
  const head=document.createElement('div');head.className='detail-head';
  const h=document.createElement('h2');h.className='lesson-translatable';h.textContent='📖 شرح درس: '+name;
- const art=document.createElement('img');art.className='detail-hero-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;
+ const art=document.createElement('img');art.className='detail-hero-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_LESSON_META?.[name]?.image||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;
  const intro=document.createElement('p');intro.className='small lesson-translatable';intro.textContent=data.intro;
  head.append(h,art,intro);$('lessonDetailContent').append(head);
  data.sections.forEach(([title,items])=>{
@@ -1173,7 +1182,7 @@ function openExplanation(name){
  const quiz=document.createElement('button');quiz.textContent='ابدأ اختبار الدرس';quiz.disabled=!BANK[name];quiz.title=BANK[name]?'':'التدريب لهذا الدرس سيضاف لاحقًا';quiz.onclick=()=>{if(BANK[name])start(name)};
  const back=document.createElement('button');back.className='subtle';back.textContent='العودة لكل الدروس';back.onclick=()=>show('lessons');
  const print=document.createElement('button');print.className='subtle';print.textContent='طباعة الشرح';print.onclick=()=>window.print();
- actions.append(toEnglish,toArabic,reset,quiz,back,print);$('lessonDetailContent').append(key,actions);
+ const speak=document.createElement('button');speak.type='button';speak.textContent='🔊 اسمع الشرح';speak.onclick=()=>{if(!('speechSynthesis' in window)){alert('ميزة القراءة الصوتية غير مدعومة في هذا المتصفح.');return;}window.speechSynthesis.cancel();const plain=[name,data.intro,...(data.sections||[]).flatMap(s=>[s[0],...(s[1]||[])]),...(data.rules||[]).flatMap(r=>[r.title,r.text,...(r.examples||[])]),'خلاصة الدرس: '+(data.key||'')].join('. ');const parts=plain.match(/[^.!؟؛\\n]+[.!؟؛]?/g)||[plain];const chunks=[];let chunk='';parts.forEach(part=>{if((chunk+part).length>1300&&chunk){chunks.push(chunk);chunk=''}chunk+=part+' '});if(chunk)chunks.push(chunk);let pos=0;const playNext=()=>{if(pos>=chunks.length)return;const utter=new SpeechSynthesisUtterance(chunks[pos++]);utter.lang='ar-EG';utter.rate=.88;utter.pitch=1;const voices=window.speechSynthesis.getVoices();utter.voice=voices.find(v=>/^ar(-|_)?eg/i.test(v.lang))||voices.find(v=>/^ar/i.test(v.lang))||null;utter.onend=playNext;window.speechSynthesis.speak(utter)};playNext();};const stopSpeak=document.createElement('button');stopSpeak.type='button';stopSpeak.className='subtle';stopSpeak.textContent='⏹ إيقاف الصوت';stopSpeak.onclick=()=>window.speechSynthesis?.cancel();actions.append(speak,stopSpeak);actions.append(toEnglish,toArabic,reset,quiz,back,print);$('lessonDetailContent').append(key,actions);
  show('lessonDetail');window.scrollTo({top:0,behavior:'smooth'});
 }
 const lessonCards=document.getElementById('lessonCards');
@@ -1186,7 +1195,7 @@ function buildLessonCards(filter=''){
  Object.keys(EXPLAIN).filter(name=>lessonSubject(name)===selectedSubject && name.includes(filter.trim())).forEach((name,i)=>{
   const card=document.createElement('article');card.className='lesson-card';
   const num=document.createElement('span');num.className='lesson-number';num.textContent=`MANW LESSON ${String(i+1).padStart(2,'0')}`;
-  const art=document.createElement('img');art.className='lesson-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;art.loading='lazy';
+  const art=document.createElement('img');art.className='lesson-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_LESSON_META?.[name]?.image||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;art.loading='lazy';
   const title=document.createElement('h3');title.textContent=name;
   const desc=document.createElement('p');const meta=window.MANW_LESSON_META?.[name];desc.textContent=meta?`${meta.unit} · ${meta.kind} · شرح + ${BANK[name]?.length||0} سؤالًا تدريبيًا`:BANK[name]?`شرح مبسط + ${BANK[name].length} سؤالًا تدريبيًا`:'شرح مبسط ومراجعة للدرس';
   const actions=document.createElement('div');actions.className='lesson-actions';
@@ -1800,4 +1809,32 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  sb.auth.getSession().then(({data})=>inspectSession(data.session));
 })();
 </script>
-</body></html>
+<script id="manw-grade-and-voice">
+(()=>{
+ const gate=document.getElementById('manwGradeGate'),grade=document.getElementById('manwGradeSelect');
+ const toolbar=document.getElementById('manwStudentMaterials'),cards=document.getElementById('lessonCards');
+ const subject=document.getElementById('studentSubject'),count=document.getElementById('lessonCount');
+ const chat=document.getElementById('studentChat'),chatSubject=document.getElementById('manwChatSubject');
+ if(!gate||!grade||!subject)return;
+ const all=[...subject.options].map(o=>({value:o.value,label:o.textContent})).filter(o=>o.value);
+ const saved=(()=>{try{return localStorage.getItem('manw_student_grade_v1')||''}catch(e){return ''}})();
+ function applyGrade(value){
+  const prep=value==='prep3';
+  const allowed=all.filter(o=>prep?/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label):!/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label));
+  subject.innerHTML='';
+  allowed.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;subject.append(opt)});
+  toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;
+  if(value){
+   if(!allowed.length){const opt=document.createElement('option');opt.value='';opt.textContent='لا توجد مواد متاحة لهذا الصف حاليًا';subject.append(opt)}
+   subject.value=allowed.some(o=>o.value===subject.value)?subject.value:(allowed[0]?.value||'');
+   subject.dispatchEvent(new Event('change',{bubbles:true}));
+   if(chatSubject){chatSubject.disabled=!allowed.length;chatSubject.dispatchEvent(new Event('focus'))}
+   setTimeout(()=>{if(count)count.textContent=String(cards?.querySelectorAll('.lesson-card').length||0)},0);
+   gate.querySelector('h3').textContent='🎓 الصف الدراسي: '+(prep?'تالتة إعدادي':'تالتة ثانوي');
+  }else{if(count)count.textContent='0';if(chatSubject)chatSubject.disabled=true}
+ }
+ grade.addEventListener('change',()=>{try{localStorage.setItem('manw_student_grade_v1',grade.value)}catch(e){}applyGrade(grade.value)});
+ if(saved==='prep3'||saved==='secondary'){grade.value=saved;applyGrade(saved)}
+ else{toolbar.hidden=true;cards.hidden=true;if(chat)chat.hidden=true;if(chatSubject)chatSubject.disabled=true;if(count)count.textContent='0'}
+})();
+</script></body></html>

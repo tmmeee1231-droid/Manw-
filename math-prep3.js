@@ -59,10 +59,17 @@ const makeBank=(id)=>{
 lessons.forEach((l,i)=>{
  const name='رياضيات 3 إعدادي | '+String(i+1).padStart(2,'0')+' - '+l[0];
  window.MANW_LESSON_META=window.MANW_LESSON_META||{};
- window.MANW_LESSON_META[name]={subject:SUBJECT,unit:l[1],kind:'شرح تفصيلي + 40 سؤالًا'};
+ window.MANW_LESSON_META[name]={subject:SUBJECT,unit:l[1],kind:'شرح تفصيلي + 40 سؤالًا',image:makeLessonArt(i)};
  EXPLAIN[name]={intro:l[2]+' '+l[3],sections:[['الفكرة الأساسية',[l[3],l[4]]],['طريقة الحل والأمثلة',[l[5],'مثال إرشادي: اقرأ المطلوب، وحدد القانون أو التعريف المناسب، ثم عوض بالقيم خطوة بخطوة، واكتب الناتج مع وحدته إن وجدت.']],['تنبيهات مهمة',[l[6],'راجع خطوات الحل بالتعويض أو بإعادة إجراء العملية بطريقة أخرى، ولا تتسرع في اختصار التعبيرات قبل التأكد من الشروط.']]],key:l[6]};
  BANK[name]=makeBank(i);
 });
+const lessonSymbols=['xⁿ','2ˣ','ƒ(x)','⌒','0','ℝ','＋','÷','×','△','△','↗','sin','30°','m','y=','↔','Q₁','IQR','σ'];
+const lessonColors=['#65ffb2','#65eaff','#ffcc66','#ff6688'];
+const makeLessonArt=(i)=>{
+ const symbol=lessonSymbols[i]||'∑',accent=lessonColors[i%lessonColors.length];
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360"><defs><radialGradient id="g"><stop stop-color="'+accent+'" stop-opacity=".32"/><stop offset="1" stop-color="#07100e" stop-opacity="0"/></radialGradient></defs><rect width="720" height="360" rx="28" fill="#07100e"/><rect width="720" height="360" rx="28" fill="url(#g)"/><path d="M35 285H685M95 45V315" stroke="'+accent+'" stroke-opacity=".3" stroke-width="3"/><path d="M145 270Q360 '+(65+(i%5)*22)+' 575 270" fill="none" stroke="'+accent+'" stroke-width="7" stroke-linecap="round"/><circle cx="'+(150+i*19)+'" cy="'+(105+i%4*27)+'" r="13" fill="'+accent+'"/><circle cx="590" cy="75" r="38" fill="none" stroke="'+accent+'" stroke-opacity=".4" stroke-width="3"/><text x="360" y="205" text-anchor="middle" font-family="Arial,sans-serif" font-size="112" font-weight="bold" fill="#f3fff9">'+symbol+'</text><text x="660" y="325" text-anchor="end" font-family="Arial,sans-serif" font-size="22" fill="'+accent+'">MANW • LESSON '+String(i+1).padStart(2,'0')+'</text></svg>';
+ return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+};
 const selector=document.getElementById('studentSubject');
 if(selector){
  const opt=[...selector.options].find(o=>o.value===SUBJECT);

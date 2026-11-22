@@ -31,7 +31,7 @@ const makeBank=(id)=>{
  for(let i=1;i<=40;i++){
   const n=i+2, m=i+3, k=i%4+2, x=i-20;
   switch(id){
-  case 0:{const type=i%4;if(type===0)add(`بسّط: 2^${n} × 2^${m}`,`2^${n+m}`,[`2^${n*m}`,`2^${n-m}`,`2^${n}`]);else if(type===1)add(`بسّط: (3^${n})^${m}`,`3^${n*m}`,[`3^${n+m}`,`3^${n-m}`,`3^${n}`]);else if(type===2)add(`بسّط: 5^${n+m} ÷ 5^${m}`,`5^${n}`,[`5^${n+m}`,`5^${n*m}`,`5^${m}`]);else add(`ما قيمة 7^0؟`,'1',['0','7','−1']);break}
+  case 0:{const type=i%4;if(type===0)add(`بسّط: 2^${n} × 2^${m}`,`2^${n+m}`,[`2^${n*m}`,`2^${n-m}`,`2^${n}`]);else if(type===1)add(`بسّط: (3^${n})^${m}`,`3^${n*m}`,[`3^${n+m}`,`3^${n-m}`,`3^${n}`]);else if(type===2)add(`بسّط: 5^${n+m} ÷ 5^${m}`,`5^${n}`,[`5^${n+m}`,`5^${n*m}`,`5^${m}`]);else add(`ما قيمة ${n}^0؟`,'1',['0',String(n),'−1']);break}
   case 1:{const a=[2,3,5][i%3],e=i+2;add(`إذا كان ${a}^(x+${k}) = ${a}^${e+k}، فأوجد x.`,e,[e+1,e-1,e+2]);break}
   case 2:{if(i%2)add(`إذا كانت f(x)=${n}x²−${m}x+${k}، فما معامل x²؟`,n,[m,k,0]);else{const v=x;add(`إذا كانت f(x)=x²+${n}x+${m}، فأوجد f(0).`,m,[n,0,m+n])}break}
   case 3:{const h=x,k2=i+1;add(`في الدالة f(x)=(x−(${h}))²+${k2}، ما إحداثيا الرأس؟`,`(${h}, ${k2})`,`(${-h}, ${k2})`,`(${h}, ${-k2})`);break}

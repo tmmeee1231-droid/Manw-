@@ -36,7 +36,7 @@ grant select, insert, delete on public.subject_chat_messages to authenticated;
 grant usage, select on sequence public.subject_chat_messages_id_seq to authenticated;
 
 -- Server-side cleanup: remove expired messages every minute.
-create extension if not exists pg_cron with schema extensions;
+create extension if not exists pg_cron;
 do $$
 begin
   if not exists (select 1 from cron.job where jobname = 'manw-chat-cleanup') then

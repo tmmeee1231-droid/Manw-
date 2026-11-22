@@ -161,6 +161,15 @@ background:linear-gradient(145deg,#1c1517,#100d0e);transition:transform .18s,bor
 .manw-chat-form button{min-width:105px}
 @media(max-width:520px){.manw-chat-form{flex-direction:column}.manw-chat-form button{width:100%}.manw-chat-message{max-width:96%}}
 
+
+/* MANW chat media controls */
+.manw-chat-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.manw-chat-tool{display:inline-flex;align-items:center;justify-content:center;padding:10px 13px;border:1px solid #64202b;border-radius:12px;background:#251014;color:#ffdce1;cursor:pointer;font-weight:bold}
+.manw-chat-message{position:relative;overflow-wrap:anywhere}
+.manw-chat-message img{display:block;max-width:min(100%,320px);max-height:320px;object-fit:contain;border-radius:12px;margin:8px 0;border:1px solid #64202b}
+.manw-chat-message audio{display:block;width:min(100%,320px);margin:8px 0}
+.manw-chat-delete{margin-top:8px;padding:6px 10px;font-size:12px;background:#302025;border-color:#78404b;box-shadow:none}
+#manwVoiceStatus{min-width:90px}
 </style><style>
 
 /* MANW visual refresh: responsive red/black interface */
@@ -507,6 +516,13 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
  <div id="manwChatMessages" class="manw-chat-messages" aria-live="polite"><p class="small">سجّل الدخول لعرض رسائل الطلاب.</p></div>
  <form id="manwChatForm" class="manw-chat-form">
   <textarea id="manwChatInput" rows="2" maxlength="1000" placeholder="اكتب رسالتك للطلاب..." aria-label="رسالتك" disabled></textarea>
+  <div class="manw-chat-tools">
+   <label class="manw-chat-tool" for="manwChatImage">📷 إرسال صورة</label>
+   <input id="manwChatImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden disabled>
+   <button id="manwVoiceStart" type="button" class="subtle" disabled>🎙️ تسجيل صوت</button>
+   <button id="manwVoiceStop" type="button" class="subtle" hidden>⏹️ إيقاف وإرسال</button>
+   <span id="manwVoiceStatus" class="small" aria-live="polite"></span>
+  </div>
   <button id="manwChatSend" type="submit" disabled>إرسال الرسالة</button>
  </form>
  <p class="small">ملاحظة: المحادثة متاحة للطلاب المسجلين فقط، والرسائل القديمة تُنظف دوريًا من قاعدة البيانات.</p>
@@ -1649,11 +1665,12 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   $('manwStudentSearch').addEventListener('input',refresh);await refresh();
  }
 
- // MANW subject rooms — backed by Supabase; messages expire after five hours.
+ // MANW subject rooms — text, images and voice notes; messages expire after five hours.
  const chatSubject=$('manwChatSubject'),chatMessages=$('manwChatMessages'),chatStatus=$('manwChatStatus');
  const chatForm=$('manwChatForm'),chatInput=$('manwChatInput'),chatSend=$('manwChatSend');
- let chatTimer=null,chatBusy=false;
- const chatExpiryMs=5*60*60*1000;
+ const chatImage=$('manwChatImage'),voiceStart=$('manwVoiceStart'),voiceStop=$('manwVoiceStop'),voiceStatus=$('manwVoiceStatus');
+ let chatTimer=null,chatBusy=false,chatRecorder=null,chatVoiceChunks=[];
+ const chatExpiryMs=5*60*60*1000,chatBucket='manw-chat-media';
  function chatSubjects(){
   const source=$('studentSubject');
   const names=source?[...source.options].map(o=>o.value).filter(Boolean):['الأحياء','اللغة الإنجليزية','الفيزياء'];
@@ -1663,10 +1680,21 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  }
  function chatAuthState(){
   const signed=!!currentProfile;
-  chatInput.disabled=!signed;chatSend.disabled=!signed;
+  chatInput.disabled=!signed;chatSend.disabled=!signed;chatImage.disabled=!signed;voiceStart.disabled=!signed;
   chatStatus.textContent=signed?'أنت داخل بحساب طالب. اختار المادة وشارك في النقاش.':'سجّل الدخول بحساب الطالب بالأعلى للمشاركة في المحادثات.';
  }
  function chatTime(value){return new Date(value).toLocaleString('ar-EG',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'})}
+ async function uploadChatMedia(file,kind){
+  const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('سجّل الدخول أولاً.');
+  if(file.size>20*1024*1024)throw new Error('حجم الملف أكبر من 20 ميجابايت.');
+  const ext=(file.name&&file.name.includes('.')?file.name.split('.').pop():((file.type.split('/')[1]||'bin').split(';')[0])).replace(/[^a-z0-9]/gi,'').slice(0,8)||'bin';
+  const path=user.id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+  const {error}=await sb.storage.from(chatBucket).upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
+  if(error)throw error;
+  const {error:insertError}=await sb.from('subject_chat_messages').insert({subject:chatSubject.value,user_id:user.id,sender_name:currentProfile.full_name||'طالب MANW',body:null,media_path:path,media_type:kind,media_name:file.name||('ملف '+kind)});
+  if(insertError){await sb.storage.from(chatBucket).remove([path]);throw insertError}
+  await loadSubjectChat();
+ }
  async function loadSubjectChat(){
   if(!chatMessages||chatBusy)return;
   if(!currentProfile){chatMessages.innerHTML='<p class="small">سجّل الدخول لعرض رسائل الطلاب.</p>';return}
@@ -1675,33 +1703,85 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   try{
    const cutoff=new Date(Date.now()-chatExpiryMs).toISOString();
    await sb.from('subject_chat_messages').delete().lt('created_at',cutoff);
-   const {data,error}=await sb.from('subject_chat_messages').select('id,subject,user_id,sender_name,body,created_at').eq('subject',subject).gte('created_at',cutoff).order('created_at',{ascending:true}).limit(200);
+   const {data,error}=await sb.from('subject_chat_messages').select('id,subject,user_id,sender_name,body,created_at,media_path,media_type,media_name').eq('subject',subject).gte('created_at',cutoff).order('created_at',{ascending:true}).limit(200);
    if(error)throw error;
    chatMessages.innerHTML='';
    if(!data?.length){const p=document.createElement('p');p.className='small';p.textContent='لسه مفيش رسائل في محادثة المادة دي. ابدأ النقاش!';chatMessages.appendChild(p)}
-   (data||[]).forEach(m=>{
+   for(const m of (data||[])){
     const item=document.createElement('article');item.className='manw-chat-message'+(m.user_id===currentProfile.user_id?' mine':'');
     const name=document.createElement('strong');name.textContent=m.sender_name||'طالب MANW';
-    const body=document.createElement('p');body.textContent=m.body;
     const time=document.createElement('time');time.dateTime=m.created_at;time.textContent=chatTime(m.created_at);
-    item.append(name,body,time);chatMessages.appendChild(item);
-   });
+    item.append(name);
+    if(m.body){const body=document.createElement('p');body.textContent=m.body;item.appendChild(body)}
+    if(m.media_path){
+     const {data:signed,error:signedError}=await sb.storage.from(chatBucket).createSignedUrl(m.media_path,3600);
+     if(!signedError&&signed?.signedUrl){
+      if((m.media_type||'').startsWith('image/')){const img=document.createElement('img');img.src=signed.signedUrl;img.alt=m.media_name||'صورة مرسلة';img.loading='lazy';item.appendChild(img)}
+      else if((m.media_type||'').startsWith('audio/')){const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.src=signed.signedUrl;item.appendChild(audio)}
+      else {const a=document.createElement('a');a.href=signed.signedUrl;a.target='_blank';a.rel='noopener';a.textContent=m.media_name||'فتح الملف';item.appendChild(a)}
+     }else{const unavailable=document.createElement('p');unavailable.className='small';unavailable.textContent='تعذر عرض المرفق.';item.appendChild(unavailable)}
+    }
+    item.appendChild(time);
+    if(m.user_id===currentProfile.user_id){
+     const del=document.createElement('button');del.type='button';del.className='manw-chat-delete';del.textContent='🗑️ حذف رسالتي';
+     del.addEventListener('click',async()=>{
+      if(!confirm('متأكد إنك عايز تمسح الرسالة دي؟'))return;
+      del.disabled=true;
+      try{
+       if(m.media_path){const {error:removeError}=await sb.storage.from(chatBucket).remove([m.media_path]);if(removeError)throw removeError}
+       const {error:deleteError}=await sb.from('subject_chat_messages').delete().eq('id',m.id).eq('user_id',currentProfile.user_id);
+       if(deleteError)throw deleteError;
+       await loadSubjectChat();
+      }catch(err){chatStatus.textContent='تعذر حذف الرسالة: '+(err.message||'حاول مرة أخرى');del.disabled=false}
+     });
+     item.appendChild(del);
+    }
+    chatMessages.appendChild(item);
+   }
    chatMessages.scrollTop=chatMessages.scrollHeight;
    chatStatus.textContent='غرفة '+subject+' · الرسائل تختفي بعد 5 ساعات من إرسالها.';
-  }catch(e){chatStatus.textContent='تعذر تحميل المحادثة: '+(e.message||'تحقق من إعداد قاعدة البيانات') }
+  }catch(e){chatStatus.textContent='تعذر تحميل المحادثة: '+(e.message||'تحقق من إعداد قاعدة البيانات')}
   finally{chatBusy=false}
  }
  chatSubject?.addEventListener('change',loadSubjectChat);
+ chatImage?.addEventListener('change',async()=>{
+  const file=chatImage.files?.[0];if(!file)return;
+  if(!file.type.startsWith('image/')){chatStatus.textContent='اختار ملف صورة فقط.';chatImage.value='';return}
+  chatImage.disabled=true;chatStatus.textContent='جاري رفع الصورة…';
+  try{await uploadChatMedia(file,'image/'+(file.type.split('/')[1]||'jpeg'));chatStatus.textContent='تم إرسال الصورة.'}
+  catch(e){chatStatus.textContent='تعذر إرسال الصورة: '+(e.message||'حاول مرة أخرى')}
+  finally{chatImage.value='';chatImage.disabled=!currentProfile}
+ });
+ voiceStart?.addEventListener('click',async()=>{
+  try{
+   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw new Error('تسجيل الصوت غير مدعوم في هذا المتصفح. افتح الموقع عبر HTTPS أو استخدم متصفحًا أحدث.');
+   const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+   let mime='';for(const type of ['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4']){if(MediaRecorder.isTypeSupported(type)){mime=type;break}}
+   chatVoiceChunks=[];chatRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
+   chatRecorder.ondataavailable=e=>{if(e.data?.size)chatVoiceChunks.push(e.data)};
+   chatRecorder.onstop=async()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(chatVoiceChunks,{type:chatRecorder.mimeType||'audio/webm'});
+    voiceStop.hidden=true;voiceStart.disabled=!currentProfile;voiceStatus.textContent='جاري إرسال التسجيل…';
+    try{const ext=(blob.type.includes('ogg')?'ogg':blob.type.includes('mp4')?'mp4':'webm');const file=new File([blob],'voice-'+Date.now()+'.'+ext,{type:blob.type||'audio/webm'});await uploadChatMedia(file,blob.type||'audio/webm');voiceStatus.textContent='تم إرسال التسجيل.'}
+    catch(e){chatStatus.textContent='تعذر إرسال الصوت: '+(e.message||'حاول مرة أخرى');voiceStatus.textContent=''}
+   };
+   chatRecorder.start();voiceStart.disabled=true;voiceStop.hidden=false;voiceStatus.textContent='🔴 جاري التسجيل…';
+  }catch(e){chatStatus.textContent=e.message||'تعذر تشغيل الميكروفون.'}
+ });
+ voiceStop?.addEventListener('click',()=>{if(chatRecorder&&chatRecorder.state!=='inactive'){voiceStop.disabled=true;chatRecorder.stop();voiceStop.disabled=false}});
  chatForm?.addEventListener('submit',async e=>{
   e.preventDefault();const body=chatInput.value.trim();
   if(!currentProfile){chatStatus.textContent='سجّل الدخول أولاً.';return}
   if(!body||!chatSubject.value)return;
   chatSend.disabled=true;
-  const {data:{user}}=await sb.auth.getUser();
-  const {error}=await sb.from('subject_chat_messages').insert({subject:chatSubject.value,user_id:user.id,sender_name:currentProfile.full_name||'طالب MANW',body});
-  if(error)chatStatus.textContent='تعذر إرسال الرسالة: '+error.message;
-  else{chatInput.value='';await loadSubjectChat()}
-  chatSend.disabled=false;
+  try{
+   const {data:{user}}=await sb.auth.getUser();
+   const {error}=await sb.from('subject_chat_messages').insert({subject:chatSubject.value,user_id:user.id,sender_name:currentProfile.full_name||'طالب MANW',body});
+   if(error)throw error;
+   chatInput.value='';await loadSubjectChat();
+  }catch(e){chatStatus.textContent='تعذر إرسال الرسالة: '+(e.message||'حاول مرة أخرى')}
+  finally{chatSend.disabled=!currentProfile}
  });
  chatSubjects();chatAuthState();
  // Keep room list aligned with the lesson selector and refresh messages periodically.

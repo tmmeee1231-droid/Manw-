@@ -452,6 +452,10 @@ header:after{background:linear-gradient(90deg,transparent,#d8a85d,#9d1029,#d8a85
       <span class="dashboard-icon" aria-hidden="true">🏋️</span>
       <span><strong>التدريبات</strong><small>ابدأ التدريب واختبر معلوماتك</small></span>
     </a>
+    <a class="dashboard-card green" href="#studentChat">
+      <span class="dashboard-icon" aria-hidden="true">💬</span>
+      <span><strong>محادثات الطلاب</strong><small>غرفة نقاش مستقلة لكل مادة</small></span>
+    </a>
     <a class="dashboard-card blue" href="#store">
       <span class="dashboard-icon" aria-hidden="true">🛍️</span>
       <span><strong>المتجر والحسابات</strong><small>تصفح المنتجات والخدمات</small></span>
@@ -1658,13 +1662,11 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   chatSend.disabled=false;
  });
  chatSubjects();chatAuthState();
- const originalInspectSession=inspectSession;
- // Refresh chat access whenever the login state changes.
- const chatAuthInterval=setInterval(()=>{chatAuthState();},1500);
+ // Keep room list aligned with the lesson selector and refresh messages periodically.
  chatTimer=setInterval(loadSubjectChat,8000);
  chatSubject?.addEventListener('focus',chatSubjects);
 
- sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){setTimeout(async()=>{await inspectSession(session);if(session)await saveStudentDetails()},0)}});
+ sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'){setTimeout(async()=>{await inspectSession(session);if(session)await saveStudentDetails();chatAuthState();if(session)await loadSubjectChat()},0)}});
  sb.auth.getSession().then(({data})=>inspectSession(data.session));
 })();
 </script>

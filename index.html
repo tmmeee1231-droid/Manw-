@@ -1207,7 +1207,7 @@ function buildLessonCards(filter=''){
 }
 buildLessonCards();
 $('lessonSearch').addEventListener('input',e=>buildLessonCards(e.target.value));
-$('studentSubject').addEventListener('change',e=>{selectedSubject=e.target.value;buildLessonCards($('lessonSearch').value)});
+$('studentSubject').addEventListener('change',e=>{selectedSubject=e.target.value;const search=$('lessonSearch');if(search)search.value='';buildLessonCards('');if(lessonCards)lessonCards.hidden=false;const count=$('lessonCount');if(count)count.textContent=String(lessonCards?.querySelectorAll('.lesson-card').length||0)});
 $('lessonCount').textContent=Object.keys(EXPLAIN).length;
 updateStats();
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}

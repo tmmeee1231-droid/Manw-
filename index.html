@@ -1816,11 +1816,14 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  const subject=document.getElementById('studentSubject'),count=document.getElementById('lessonCount');
  const chat=document.getElementById('studentChat'),chatSubject=document.getElementById('manwChatSubject');
  if(!gate||!grade||!subject)return;
- const all=[...subject.options].map(o=>({value:o.value,label:o.textContent})).filter(o=>o.value);
+ const all=()=>{
+  const names=['الأحياء','اللغة الإنجليزية','الفيزياء','الكيمياء','رياضيات تالتة إعدادي – الترم الأول',...([...subject.options].map(o=>o.value)),...(Object.values(window.MANW_CUSTOM_LESSONS||{}).map(x=>x&&x.subject).filter(Boolean))];
+  return [...new Set(names)].filter(Boolean).map(n=>({value:n,label:n}));
+ };
  const saved=(()=>{try{return localStorage.getItem('manw_student_grade_v1')||''}catch(e){return ''}})();
  function applyGrade(value){
   const prep=value==='prep3';
-  const allowed=all.filter(o=>prep?/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label):!/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label));
+  const allowed=all().filter(o=>prep?/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label):!/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label));
   subject.innerHTML='';
   allowed.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;subject.append(opt)});
   toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;

@@ -1823,7 +1823,8 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  const saved=(()=>{try{return localStorage.getItem('manw_student_grade_v1')||''}catch(e){return ''}})();
  function applyGrade(value){
   const prep=value==='prep3';
-  const allowed=all().filter(o=>prep?/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label):!/تالتة إعدادي|ثالثة إعدادي|3(?:rd)? prep/i.test(o.value+' '+o.label));
+  const isPrepSubject=o=>/(?:تالتة|ثالثة)\\s*إعدادي|3\\s*(?:rd\\s*)?إعدادي|3\\s*(?:rd\\s*)?اعدادي|3(?:rd)?\\s*prep/i.test(o.value+' '+o.label);
+  const allowed=all().filter(o=>prep?isPrepSubject(o):!isPrepSubject(o));
   subject.innerHTML='';
   allowed.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;subject.append(opt)});
   toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;

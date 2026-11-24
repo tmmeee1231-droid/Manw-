@@ -1927,6 +1927,22 @@ window.MANW_UPDATE_STATS=updateStats;
    if(count&&cards)count.textContent=String(cards.querySelectorAll(".lesson-card").length);
   });
  }
+ // Final safety render after lesson data and grade selector initialization.
+ const chemistryCount=Object.keys(window.MANW_EXPLAIN||{}).filter(name=>window.MANW_LESSON_META?.[name]?.subject==="الكيمياء").length;
+ function ensureChemistryVisible(){
+  if(!gradeSelect||!materialSelect||gradeSelect.value!=="secondary"||!chemistryCount)return;
+  if(!Array.from(materialSelect.options).some(option=>option.value==="الكيمياء")){
+   const option=document.createElement("option");option.value="الكيمياء";option.textContent="الكيمياء";materialSelect.appendChild(option);
+  }
+  materialSelect.value="الكيمياء";
+  window.MANW_SET_SELECTED_SUBJECT("الكيمياء");
+  window.MANW_RENDER_LESSONS("");
+  if(cards)cards.hidden=false;
+  if(toolbar)toolbar.hidden=false;
+  if(count)count.textContent=String(cards?.querySelectorAll(".lesson-card").length||0);
+ }
+ ensureChemistryVisible();
+ if(gradeSelect)gradeSelect.addEventListener("change",ensureChemistryVisible);
 })();
 
 </script></body></html>

@@ -1881,10 +1881,7 @@ window.MANW_UPDATE_STATS=updateStats;
   window.MANW_LESSON_META=window.MANW_LESSON_META||{};
   window.MANW_LESSON_META[name]={subject:"كيمياء 𝕄💪",unit,kind:"شرح + 40 سؤالًا",image:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)};
  });
- const sel=document.getElementById("studentSubject");
- if(sel&&!Array.from(sel.options).some(o=>o.value==="كيمياء 𝕄💪")){const op=document.createElement("option");op.value="كيمياء 𝕄💪";op.textContent="كيمياء 𝕄💪";sel.appendChild(op)}
- if(sel){sel.value="كيمياء 𝕄💪";window.MANW_SET_SELECTED_SUBJECT("كيمياء 𝕄💪");}
- window.MANW_RENDER_LESSONS();document.getElementById("lessonCount").textContent=Object.keys(window.MANW_EXPLAIN).length;window.MANW_UPDATE_STATS();
+ window.MANW_UPDATE_STATS();
 
  // Register the new subject label once; the grade selector owns filtering.
  const subjectName="كيمياء 𝕄💪";

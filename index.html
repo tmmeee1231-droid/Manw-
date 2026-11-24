@@ -1831,6 +1831,10 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
    if(!allowed.length){const opt=document.createElement('option');opt.value='';opt.textContent='لا توجد مواد متاحة لهذا الصف حاليًا';subject.append(opt)}
    subject.value=allowed.some(o=>o.value===subject.value)?subject.value:(allowed[0]?.value||'');
    subject.dispatchEvent(new Event('change',{bubbles:true}));
+   // Ensure the lesson list follows the selected grade and subject.
+   if(typeof selectedSubject!=='undefined') selectedSubject=subject.value;
+   const search=document.getElementById('lessonSearch');if(search)search.value='';
+   if(typeof buildLessonCards==='function') buildLessonCards('');
    if(chatSubject){chatSubject.disabled=!allowed.length;chatSubject.dispatchEvent(new Event('focus'))}
    setTimeout(()=>{if(count)count.textContent=String(cards?.querySelectorAll('.lesson-card').length||0)},0);
    gate.querySelector('h3').textContent='🎓 الصف الدراسي: '+(prep?'تالتة إعدادي':'تالتة ثانوي');

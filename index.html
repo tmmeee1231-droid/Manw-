@@ -1872,6 +1872,34 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  if(sel&&!Array.from(sel.options).some(o=>o.value==="الكيمياء")){const op=document.createElement("option");op.value="الكيمياء";op.textContent="الكيمياء";sel.appendChild(op)}
  if(sel){sel.value="الكيمياء";selectedSubject="الكيمياء";}
  buildLessonCards();$("lessonCount").textContent=Object.keys(EXPLAIN).length;updateStats();
+ // Final grade/material filter runs after every course has been registered.
+ const gradeSelect=document.getElementById("manwGradeSelect");
+ const materialSelect=document.getElementById("studentSubject");
+ const gradeMaterials={
+  secondary:["الأحياء","اللغة الإنجليزية","الفيزياء","الكيمياء"],
+  prep3:["رياضيات تالتة إعدادي – الترم الأول"]
+ };
+ function syncGradeMaterials(){
+  if(!gradeSelect||!materialSelect)return;
+  const list=gradeMaterials[gradeSelect.value]||[];
+  materialSelect.innerHTML="";
+  list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;materialSelect.appendChild(op)});
+  const value=list[0]||"";
+  materialSelect.value=value;
+  selectedSubject=value;
+  const chatSel=document.getElementById("manwChatSubject");
+  if(chatSel){chatSel.innerHTML="";list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;chatSel.appendChild(op)});chatSel.disabled=!list.length}
+  const cards=document.getElementById("lessonCards");
+  if(cards)cards.hidden=!gradeSelect.value;
+  const toolbar=document.getElementById("manwStudentMaterials");
+  if(toolbar)toolbar.hidden=!gradeSelect.value;
+  const search=document.getElementById("lessonSearch");if(search)search.value="";
+  if(typeof buildLessonCards==="function")buildLessonCards("");
+ }
+ if(gradeSelect){
+  gradeSelect.addEventListener("change",syncGradeMaterials);
+  if(gradeSelect.value)syncGradeMaterials();
+ }
 })();
 
 </script></body></html>

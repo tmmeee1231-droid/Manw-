@@ -1842,7 +1842,7 @@ window.MANW_UPDATE_STATS=updateStats;
   toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;
   if(value){
    if(!allowed.length){const opt=document.createElement('option');opt.value='';opt.textContent='لا توجد مواد متاحة لهذا الصف حاليًا';subject.append(opt)}
-   subject.value=allowed.some(o=>o.value===previousSubject)?previousSubject:(allowed[0]?.value||'');
+   subject.value=(!prep&&allowed.some(o=>o.value==='كيمياء 𝕄💪'))?'كيمياء 𝕄💪':(allowed.some(o=>o.value===previousSubject)?previousSubject:(allowed[0]?.value||''));
    subject.dispatchEvent(new Event('change',{bubbles:true}));
    // Ensure the lesson list follows the selected grade and subject.
    window.MANW_SET_SELECTED_SUBJECT(subject.value);

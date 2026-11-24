@@ -1391,14 +1391,9 @@ window.MANW_UPDATE_STATS=updateStats;
  let hiddenLessons=read(HIDDEN_LESSONS_DB,[]);if(!Array.isArray(hiddenLessons))hiddenLessons=[];
  let customLessons=read(LESSON_DB,{});
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
- const isChemistrySubject=n=>/كيمياء|الكيمياء/i.test(String(n||''));
- subjects=subjects.filter(n=>!isChemistrySubject(n));
- archivedSubjects=archivedSubjects.filter(n=>!isChemistrySubject(n));
- customLessons=Object.fromEntries(Object.entries(customLessons).filter(([name,data])=>!isChemistrySubject(data&&data.subject)));
- save(SUBJECTS_DB,subjects);save(ARCHIVED_SUBJECTS_DB,archivedSubjects);save(LESSON_DB,customLessons);
  window.MANW_CUSTOM_LESSONS=customLessons;
  function allSubjectNames(){
-  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء','رياضيات تالتة إعدادي – الترم الأول',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء','الكيمياء','رياضيات تالتة إعدادي – الترم الأول',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
  }
  function renderSubjects(){
   const names=allSubjectNames(),active=names.filter(n=>!archivedSubjects.includes(n));
@@ -1833,10 +1828,9 @@ window.MANW_UPDATE_STATS=updateStats;
  const chat=document.getElementById('studentChat'),chatSubject=document.getElementById('manwChatSubject');
  if(!gate||!grade||!subject)return;
  const all=()=>{
-  const names=['الأحياء','اللغة الإنجليزية','الفيزياء','رياضيات تالتة إعدادي – الترم الأول',...([...subject.options].map(o=>o.value)),...(Object.values(window.MANW_CUSTOM_LESSONS||{}).map(x=>x&&x.subject).filter(Boolean))];
+  const names=['الأحياء','اللغة الإنجليزية','الفيزياء','الكيمياء','رياضيات تالتة إعدادي – الترم الأول',...([...subject.options].map(o=>o.value)),...(Object.values(window.MANW_CUSTOM_LESSONS||{}).map(x=>x&&x.subject).filter(Boolean))];
   return [...new Set(names)].filter(Boolean).map(n=>({value:n,label:n}));
  };
- const saved=(()=>{try{return localStorage.getItem('manw_student_grade_v1')||''}catch(e){return ''}})();
  function applyGrade(value){
   const prep=value==='prep3';
   const isPrepSubject=o=>/(?:تالتة|ثالثة)\\s*إعدادي|3\\s*(?:rd\\s*)?إعدادي|3\\s*(?:rd\\s*)?اعدادي|3(?:rd)?\\s*prep/i.test(o.value+' '+o.label);
@@ -1859,8 +1853,10 @@ window.MANW_UPDATE_STATS=updateStats;
   }else{if(count)count.textContent='0';if(chatSubject)chatSubject.disabled=true}
  }
  grade.addEventListener('change',()=>{try{localStorage.setItem('manw_student_grade_v1',grade.value)}catch(e){}applyGrade(grade.value)});
- if(saved==='prep3'||saved==='secondary'){grade.value=saved;applyGrade(saved)}
- else{toolbar.hidden=true;cards.hidden=true;if(chat)chat.hidden=true;if(chatSubject)chatSubject.disabled=true;if(count)count.textContent='0'}
+ grade.value='';
+ toolbar.hidden=true;cards.hidden=true;if(chat)chat.hidden=true;if(chatSubject)chatSubject.disabled=true;
+ if(count)count.textContent='0';
+ gate.querySelector('h3').textContent='🎓 أنت في سنة كام؟';
 })();
 
 })();

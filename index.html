@@ -1833,7 +1833,7 @@ window.MANW_UPDATE_STATS=updateStats;
  };
  function applyGrade(value){
   const prep=value==='prep3';
-  const isPrepSubject=o=>/(?:تالتة|ثالثة)\\s*إعدادي|3\\s*(?:rd\\s*)?إعدادي|3\\s*(?:rd\\s*)?اعدادي|3(?:rd)?\\s*prep/i.test(o.value+' '+o.label);
+  const isPrepSubject=o=>/(?:تالتة|ثالثة)\s*إعدادي|3\s*(?:rd\s*)?إعدادي|3\s*(?:rd\s*)?اعدادي|3(?:rd)?\s*prep/i.test(o.value+' '+o.label) || /رياضيات.*إعدادي|رياضيات.*اعدادي/.test(o.value+' '+o.label);
   const allowed=all().filter(o=>prep?isPrepSubject(o):!isPrepSubject(o));
   const previousSubject=subject.value||(window.MANW_GET_SELECTED_SUBJECT());
   subject.innerHTML='';

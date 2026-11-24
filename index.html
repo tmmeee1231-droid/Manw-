@@ -1887,7 +1887,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   const previous=materialSelect.value||selectedSubject||"";
   materialSelect.innerHTML="";
   list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;materialSelect.appendChild(op)});
-  const value=list.includes(previous)?previous:(list[0]||"");
+  const value=gradeSelect.value==="secondary"&&list.includes("الكيمياء")?"الكيمياء":(list.includes(previous)?previous:(list[0]||""));
   materialSelect.value=value;
   selectedSubject=value;
   const chatSel=document.getElementById("manwChatSubject");

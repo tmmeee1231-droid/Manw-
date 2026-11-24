@@ -1884,7 +1884,8 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   const list=gradeMaterials[gradeSelect.value]||[];
   materialSelect.innerHTML="";
   list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;materialSelect.appendChild(op)});
-  const value=list[0]||"";
+  const previous=materialSelect.value||selectedSubject||"";
+  const value=list.includes(previous)?previous:(list[0]||"");
   materialSelect.value=value;
   selectedSubject=value;
   const chatSel=document.getElementById("manwChatSubject");
@@ -1895,6 +1896,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   if(toolbar)toolbar.hidden=!gradeSelect.value;
   const search=document.getElementById("lessonSearch");if(search)search.value="";
   if(typeof buildLessonCards==="function")buildLessonCards("");
+  if(cards){const count=document.getElementById("lessonCount");if(count)count.textContent=String(cards.querySelectorAll(".lesson-card").length)}
  }
  if(gradeSelect){
   gradeSelect.addEventListener("change",syncGradeMaterials);

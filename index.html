@@ -1279,6 +1279,7 @@ window.MANW_EXPLAIN=EXPLAIN;
 window.MANW_BANK=BANK;
 window.MANW_RENDER_LESSONS=(filter='')=>buildLessonCards(filter);
 window.MANW_SET_SELECTED_SUBJECT=value=>{selectedSubject=value};
+window.MANW_GET_SELECTED_SUBJECT=()=>selectedSubject;
 window.MANW_UPDATE_STATS=updateStats;
 </script>
 <script src="math-prep3.js?v=20261122"></script>
@@ -1835,7 +1836,7 @@ window.MANW_UPDATE_STATS=updateStats;
   const prep=value==='prep3';
   const isPrepSubject=o=>/(?:تالتة|ثالثة)\\s*إعدادي|3\\s*(?:rd\\s*)?إعدادي|3\\s*(?:rd\\s*)?اعدادي|3(?:rd)?\\s*prep/i.test(o.value+' '+o.label);
   const allowed=all().filter(o=>prep?isPrepSubject(o):!isPrepSubject(o));
-  const previousSubject=subject.value||(typeof selectedSubject!=='undefined'?selectedSubject:'');
+  const previousSubject=subject.value||(window.MANW_GET_SELECTED_SUBJECT());
   subject.innerHTML='';
   allowed.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;subject.append(opt)});
   toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;
@@ -1844,9 +1845,9 @@ window.MANW_UPDATE_STATS=updateStats;
    subject.value=allowed.some(o=>o.value===previousSubject)?previousSubject:(allowed[0]?.value||'');
    subject.dispatchEvent(new Event('change',{bubbles:true}));
    // Ensure the lesson list follows the selected grade and subject.
-   if(typeof selectedSubject!=='undefined') selectedSubject=subject.value;
+   window.MANW_SET_SELECTED_SUBJECT(subject.value);
    const search=document.getElementById('lessonSearch');if(search)search.value='';
-   if(typeof buildLessonCards==='function') buildLessonCards('');
+   window.MANW_RENDER_LESSONS('');
    if(chatSubject){chatSubject.disabled=!allowed.length;chatSubject.dispatchEvent(new Event('focus'))}
    setTimeout(()=>{if(count)count.textContent=String(cards?.querySelectorAll('.lesson-card').length||0)},0);
    gate.querySelector('h3').textContent='🎓 الصف الدراسي: '+(prep?'تالتة إعدادي':'تالتة ثانوي');
@@ -1883,7 +1884,7 @@ window.MANW_UPDATE_STATS=updateStats;
  const sel=document.getElementById("studentSubject");
  if(sel&&!Array.from(sel.options).some(o=>o.value==="الكيمياء")){const op=document.createElement("option");op.value="الكيمياء";op.textContent="الكيمياء";sel.appendChild(op)}
  if(sel){sel.value="الكيمياء";window.MANW_SET_SELECTED_SUBJECT("الكيمياء");}
- window.MANW_RENDER_LESSONS();$("lessonCount").textContent=Object.keys(window.MANW_EXPLAIN).length;window.MANW_UPDATE_STATS();
+ window.MANW_RENDER_LESSONS();document.getElementById("lessonCount").textContent=Object.keys(window.MANW_EXPLAIN).length;window.MANW_UPDATE_STATS();
  // Final grade/material filter runs after every course has been registered.
  const gradeSelect=document.getElementById("manwGradeSelect");
  const materialSelect=document.getElementById("studentSubject");
@@ -1894,12 +1895,12 @@ window.MANW_UPDATE_STATS=updateStats;
  function syncGradeMaterials(){
   if(!gradeSelect||!materialSelect)return;
   const list=gradeMaterials[gradeSelect.value]||[];
-  const previous=materialSelect.value||selectedSubject||"";
+  const previous=materialSelect.value||window.MANW_GET_SELECTED_SUBJECT()||"";
   materialSelect.innerHTML="";
   list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;materialSelect.appendChild(op)});
   const value=gradeSelect.value==="secondary"&&list.includes("الكيمياء")?"الكيمياء":(list.includes(previous)?previous:(list[0]||""));
   materialSelect.value=value;
-  selectedSubject=value;
+  window.MANW_SET_SELECTED_SUBJECT(value);
   const chatSel=document.getElementById("manwChatSubject");
   if(chatSel){chatSel.innerHTML="";list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;chatSel.appendChild(op)});chatSel.disabled=!list.length}
   const cards=document.getElementById("lessonCards");
@@ -1917,7 +1918,7 @@ window.MANW_UPDATE_STATS=updateStats;
  // Re-render the lesson list explicitly whenever the student changes material.
  if(materialSelect){
   materialSelect.addEventListener("change",()=>{
-   selectedSubject=materialSelect.value.trim();
+   window.MANW_SET_SELECTED_SUBJECT(materialSelect.value.trim());
    const search=document.getElementById("lessonSearch");if(search)search.value="";
    if(typeof window.MANW_RENDER_LESSONS==="function")window.MANW_RENDER_LESSONS("");
    const cards=document.getElementById("lessonCards");

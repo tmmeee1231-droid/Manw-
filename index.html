@@ -1167,9 +1167,13 @@ function openExplanation(name){
   const heading=document.createElement('h3');heading.className='lesson-translatable';heading.textContent='📚 القواعد المرتبطة بالوحدة';wrap.append(heading);
   data.rules.forEach(rule=>{
    const block=document.createElement('div');block.className='rule-card';block.style.cssText='padding:14px;margin:12px 0;border:1px solid rgba(128,128,128,.35);border-radius:14px;background:rgba(128,128,128,.06)';
-   const rh=document.createElement('h4');rh.className='lesson-translatable';rh.textContent=rule.title;block.append(rh);
-   const rp=document.createElement('p');rp.className='lesson-translatable';rp.textContent=rule.text;rp.style.lineHeight='1.9';block.append(rp);
-   const ex=document.createElement('p');ex.className='lesson-translatable';ex.textContent='أمثلة: '+rule.examples.join(' | ');ex.style.whiteSpace='pre-wrap';ex.style.lineHeight='1.8';block.append(ex);
+   if(typeof rule==='string'){
+    const rp=document.createElement('p');rp.className='lesson-translatable';rp.textContent=rule;rp.style.lineHeight='1.9';rp.style.whiteSpace='pre-wrap';block.append(rp);
+   }else{
+    const rh=document.createElement('h4');rh.className='lesson-translatable';rh.textContent=rule.title||'قاعدة مهمة';block.append(rh);
+    const rp=document.createElement('p');rp.className='lesson-translatable';rp.textContent=rule.text||'';rp.style.lineHeight='1.9';block.append(rp);
+    if(Array.isArray(rule.examples)&&rule.examples.length){const ex=document.createElement('p');ex.className='lesson-translatable';ex.textContent='أمثلة: '+rule.examples.join(' | ');ex.style.whiteSpace='pre-wrap';ex.style.lineHeight='1.8';block.append(ex);}
+   }
    wrap.append(block);
   });
   $('lessonDetailContent').append(wrap);

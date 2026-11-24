@@ -1902,6 +1902,18 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   gradeSelect.addEventListener("change",syncGradeMaterials);
   if(gradeSelect.value)syncGradeMaterials();
  }
+ // Re-render the lesson list explicitly whenever the student changes material.
+ if(materialSelect){
+  materialSelect.addEventListener("change",()=>{
+   selectedSubject=materialSelect.value.trim();
+   const search=document.getElementById("lessonSearch");if(search)search.value="";
+   if(typeof buildLessonCards==="function")buildLessonCards("");
+   const cards=document.getElementById("lessonCards");
+   if(cards)cards.hidden=!gradeSelect?.value;
+   const count=document.getElementById("lessonCount");
+   if(count&&cards)count.textContent=String(cards.querySelectorAll(".lesson-card").length);
+  });
+ }
 })();
 
 </script></body></html>

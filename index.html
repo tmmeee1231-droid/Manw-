@@ -1393,7 +1393,7 @@ window.MANW_UPDATE_STATS=updateStats;
  if(!customLessons || typeof customLessons!=='object' || Array.isArray(customLessons)) customLessons={};
  window.MANW_CUSTOM_LESSONS=customLessons;
  function allSubjectNames(){
-  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء','الكيمياء','رياضيات تالتة إعدادي – الترم الأول',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
+  return [...new Set(['الأحياء','اللغة الإنجليزية','الفيزياء','كيمياء 𝕄💪','رياضيات تالتة إعدادي – الترم الأول',...subjects,...Object.values(customLessons).map(x=>x&&x.subject).filter(Boolean)])];
  }
  function renderSubjects(){
   const names=allSubjectNames(),active=names.filter(n=>!archivedSubjects.includes(n));
@@ -1828,7 +1828,7 @@ window.MANW_UPDATE_STATS=updateStats;
  const chat=document.getElementById('studentChat'),chatSubject=document.getElementById('manwChatSubject');
  if(!gate||!grade||!subject)return;
  const all=()=>{
-  const names=['الأحياء','اللغة الإنجليزية','الفيزياء','الكيمياء','رياضيات تالتة إعدادي – الترم الأول',...([...subject.options].map(o=>o.value)),...(Object.values(window.MANW_CUSTOM_LESSONS||{}).map(x=>x&&x.subject).filter(Boolean))];
+  const names=['الأحياء','اللغة الإنجليزية','الفيزياء','كيمياء 𝕄💪','رياضيات تالتة إعدادي – الترم الأول',...([...subject.options].map(o=>o.value)),...(Object.values(window.MANW_CUSTOM_LESSONS||{}).map(x=>x&&x.subject).filter(Boolean))];
   return [...new Set(names)].filter(Boolean).map(n=>({value:n,label:n}));
  };
  const saved=(()=>{try{return localStorage.getItem('manw_student_grade_v1')||''}catch(e){return ''}})();
@@ -1879,70 +1879,29 @@ window.MANW_UPDATE_STATS=updateStats;
   window.MANW_BANK[name]=questions.slice(0,40);
   const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520"><defs><radialGradient id="g"><stop stop-color="#641020"/><stop offset="1" stop-color="#080608"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="900" height="520" fill="url(#g)"/><circle cx="450" cy="250" r="190" fill="#b11b32" opacity=".24" filter="url(#b)"/><g fill="none" stroke="#e7a1ae" stroke-width="3" opacity=".72"><circle cx="450" cy="250" r="155"/><circle cx="450" cy="250" r="105"/><path d="M295 250h310M450 95v310M340 140l220 220M560 140L340 360"/></g><g fill="#fff" font-family="Arial" text-anchor="middle"><text x="450" y="240" font-size="52" font-weight="bold">'+esc(name)+'</text><text x="450" y="300" font-size="25">CHEMISTRY · GRADE 12</text><text x="450" y="465" font-size="22" fill="#f3a4b0">MANW · LESSON '+String(idx+1).padStart(2,"0")+'</text></g></svg>';
   window.MANW_LESSON_META=window.MANW_LESSON_META||{};
-  window.MANW_LESSON_META[name]={subject:"الكيمياء",unit,kind:"شرح + 40 سؤالًا",image:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)};
+  window.MANW_LESSON_META[name]={subject:"كيمياء 𝕄💪",unit,kind:"شرح + 40 سؤالًا",image:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)};
  });
  const sel=document.getElementById("studentSubject");
- if(sel&&!Array.from(sel.options).some(o=>o.value==="الكيمياء")){const op=document.createElement("option");op.value="الكيمياء";op.textContent="الكيمياء";sel.appendChild(op)}
- if(sel){sel.value="الكيمياء";window.MANW_SET_SELECTED_SUBJECT("الكيمياء");}
+ if(sel&&!Array.from(sel.options).some(o=>o.value==="كيمياء 𝕄💪")){const op=document.createElement("option");op.value="كيمياء 𝕄💪";op.textContent="كيمياء 𝕄💪";sel.appendChild(op)}
+ if(sel){sel.value="كيمياء 𝕄💪";window.MANW_SET_SELECTED_SUBJECT("كيمياء 𝕄💪");}
  window.MANW_RENDER_LESSONS();document.getElementById("lessonCount").textContent=Object.keys(window.MANW_EXPLAIN).length;window.MANW_UPDATE_STATS();
- // Final grade/material filter runs after every course has been registered.
+
+ // Register the new subject label once; the grade selector owns filtering.
+ const subjectName="كيمياء 𝕄💪";
+ const sel=document.getElementById("studentSubject");
  const gradeSelect=document.getElementById("manwGradeSelect");
- const materialSelect=document.getElementById("studentSubject");
- const gradeMaterials={
-  secondary:["الأحياء","اللغة الإنجليزية","الفيزياء","الكيمياء"],
-  prep3:["رياضيات تالتة إعدادي – الترم الأول"]
- };
- function syncGradeMaterials(){
-  if(!gradeSelect||!materialSelect)return;
-  const list=gradeMaterials[gradeSelect.value]||[];
-  const previous=materialSelect.value||window.MANW_GET_SELECTED_SUBJECT()||"";
-  materialSelect.innerHTML="";
-  list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;materialSelect.appendChild(op)});
-  const value=gradeSelect.value==="secondary"&&list.includes("الكيمياء")?"الكيمياء":(list.includes(previous)?previous:(list[0]||""));
-  materialSelect.value=value;
-  window.MANW_SET_SELECTED_SUBJECT(value);
-  const chatSel=document.getElementById("manwChatSubject");
-  if(chatSel){chatSel.innerHTML="";list.forEach(n=>{const op=document.createElement("option");op.value=n;op.textContent=n;chatSel.appendChild(op)});chatSel.disabled=!list.length}
-  const cards=document.getElementById("lessonCards");
-  if(cards)cards.hidden=!gradeSelect.value;
-  const toolbar=document.getElementById("manwStudentMaterials");
-  if(toolbar)toolbar.hidden=!gradeSelect.value;
-  const search=document.getElementById("lessonSearch");if(search)search.value="";
-  if(typeof window.MANW_RENDER_LESSONS==="function")window.MANW_RENDER_LESSONS("");
-  if(cards){const count=document.getElementById("lessonCount");if(count)count.textContent=String(cards.querySelectorAll(".lesson-card").length)}
+ if(sel&&!Array.from(sel.options).some(o=>o.value===subjectName)){
+  const op=document.createElement("option");op.value=subjectName;op.textContent=subjectName;sel.appendChild(op);
  }
- if(gradeSelect){
-  gradeSelect.addEventListener("change",syncGradeMaterials);
-  if(gradeSelect.value)syncGradeMaterials();
- }
- // Re-render the lesson list explicitly whenever the student changes material.
- if(materialSelect){
-  materialSelect.addEventListener("change",()=>{
-   window.MANW_SET_SELECTED_SUBJECT(materialSelect.value.trim());
-   const search=document.getElementById("lessonSearch");if(search)search.value="";
-   if(typeof window.MANW_RENDER_LESSONS==="function")window.MANW_RENDER_LESSONS("");
-   const cards=document.getElementById("lessonCards");
-   if(cards)cards.hidden=!gradeSelect?.value;
-   const count=document.getElementById("lessonCount");
-   if(count&&cards)count.textContent=String(cards.querySelectorAll(".lesson-card").length);
-  });
- }
- // Final safety render after lesson data and grade selector initialization.
- const chemistryCount=Object.keys(window.MANW_EXPLAIN||{}).filter(name=>window.MANW_LESSON_META?.[name]?.subject==="الكيمياء").length;
- function ensureChemistryVisible(){
-  if(!gradeSelect||!materialSelect||gradeSelect.value!=="secondary"||!chemistryCount)return;
-  if(!Array.from(materialSelect.options).some(option=>option.value==="الكيمياء")){
-   const option=document.createElement("option");option.value="الكيمياء";option.textContent="الكيمياء";materialSelect.appendChild(option);
+ if(sel&&gradeSelect?.value==="secondary"){
+  if(sel.value==="الكيمياء"||!sel.value)sel.value=subjectName;
+  if(sel.value===subjectName){
+   window.MANW_SET_SELECTED_SUBJECT(subjectName);
+   window.MANW_RENDER_LESSONS("");
+   sel.dispatchEvent(new Event("change",{bubbles:true}));
   }
-  materialSelect.value="الكيمياء";
-  window.MANW_SET_SELECTED_SUBJECT("الكيمياء");
-  window.MANW_RENDER_LESSONS("");
-  if(cards)cards.hidden=false;
-  if(toolbar)toolbar.hidden=false;
-  if(count)count.textContent=String(cards?.querySelectorAll(".lesson-card").length||0);
  }
- ensureChemistryVisible();
- if(gradeSelect)gradeSelect.addEventListener("change",ensureChemistryVisible);
+
 })();
 
 </script></body></html>

@@ -1191,8 +1191,11 @@ const $=id=>document.getElementById(id);
 let selectedSubject='الأحياء';
 function lessonSubject(name){const meta=window.MANW_LESSON_META?.[name];const d=window.MANW_CUSTOM_LESSONS?.[name];return (meta&&meta.subject)||(d&&d.subject)||'الأحياء'}
 function buildLessonCards(filter=''){
+ const subjectSelect=document.getElementById('studentSubject');
+ const activeSubject=subjectSelect?.value||selectedSubject;
+ selectedSubject=activeSubject;
  lessonCards.innerHTML='';
- Object.keys(EXPLAIN).filter(name=>lessonSubject(name)===selectedSubject && name.includes(filter.trim())).forEach((name,i)=>{
+ Object.keys(EXPLAIN).filter(name=>lessonSubject(name)===activeSubject && name.includes(filter.trim())).forEach((name,i)=>{
   const card=document.createElement('article');card.className='lesson-card';
   const num=document.createElement('span');num.className='lesson-number';num.textContent=`MANW LESSON ${String(i+1).padStart(2,'0')}`;
   const art=document.createElement('img');art.className='lesson-art';art.src=window.MANW_CUSTOM_LESSONS?.[name]?.imageData||window.MANW_LESSON_META?.[name]?.image||window.MANW_ENGLISH_IMAGE_MAP?.[name]||LESSON_IMAGES[Object.keys(EXPLAIN).indexOf(name)];art.alt='صورة توضيحية لدرس '+name;art.loading='lazy';

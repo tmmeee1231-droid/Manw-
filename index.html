@@ -1273,6 +1273,13 @@ function finish(){
 $('again').onclick=()=>start(lesson);
 $('back').onclick=()=>{quizFinished=false;show('lessons')};
 
+
+// Expose the lesson data and renderer for the later grade/material script.
+window.MANW_EXPLAIN=EXPLAIN;
+window.MANW_BANK=BANK;
+window.MANW_RENDER_LESSONS=(filter='')=>buildLessonCards(filter);
+window.MANW_SET_SELECTED_SUBJECT=value=>{selectedSubject=value};
+window.MANW_UPDATE_STATS=updateStats;
 </script>
 <script src="math-prep3.js?v=20261122"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1858,7 +1865,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
  chemLessons.forEach((entry,idx)=>{
   const [name,unit,intro,fs]=entry;
   const sections=[[ "الفكرة الأساسية",fs.slice(0,3) ],["التفاصيل العلمية",fs.slice(3,6)],["نقاط مهمة للمراجعة",fs.slice(6,8)]];
-  EXPLAIN[name]={intro:"شرح مبسط — "+intro,sections};
+  window.MANW_EXPLAIN[name]={intro:"شرح مبسط — "+intro,sections};
   const questions=[];
   fs.forEach((fact,fi)=>{
    for(let k=0;k<5;k++){
@@ -1868,15 +1875,15 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
     questions.push({q:qTemplates[k](fact),a:fact,o:opts.slice(0,4)});
    }
   });
-  BANK[name]=questions.slice(0,40);
+  window.MANW_BANK[name]=questions.slice(0,40);
   const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520"><defs><radialGradient id="g"><stop stop-color="#641020"/><stop offset="1" stop-color="#080608"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="900" height="520" fill="url(#g)"/><circle cx="450" cy="250" r="190" fill="#b11b32" opacity=".24" filter="url(#b)"/><g fill="none" stroke="#e7a1ae" stroke-width="3" opacity=".72"><circle cx="450" cy="250" r="155"/><circle cx="450" cy="250" r="105"/><path d="M295 250h310M450 95v310M340 140l220 220M560 140L340 360"/></g><g fill="#fff" font-family="Arial" text-anchor="middle"><text x="450" y="240" font-size="52" font-weight="bold">'+esc(name)+'</text><text x="450" y="300" font-size="25">CHEMISTRY · GRADE 12</text><text x="450" y="465" font-size="22" fill="#f3a4b0">MANW · LESSON '+String(idx+1).padStart(2,"0")+'</text></g></svg>';
   window.MANW_LESSON_META=window.MANW_LESSON_META||{};
   window.MANW_LESSON_META[name]={subject:"الكيمياء",unit,kind:"شرح + 40 سؤالًا",image:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)};
  });
- const sel=$("studentSubject");
+ const sel=document.getElementById("studentSubject");
  if(sel&&!Array.from(sel.options).some(o=>o.value==="الكيمياء")){const op=document.createElement("option");op.value="الكيمياء";op.textContent="الكيمياء";sel.appendChild(op)}
- if(sel){sel.value="الكيمياء";selectedSubject="الكيمياء";}
- buildLessonCards();$("lessonCount").textContent=Object.keys(EXPLAIN).length;updateStats();
+ if(sel){sel.value="الكيمياء";window.MANW_SET_SELECTED_SUBJECT("الكيمياء");}
+ window.MANW_RENDER_LESSONS();$("lessonCount").textContent=Object.keys(window.MANW_EXPLAIN).length;window.MANW_UPDATE_STATS();
  // Final grade/material filter runs after every course has been registered.
  const gradeSelect=document.getElementById("manwGradeSelect");
  const materialSelect=document.getElementById("studentSubject");
@@ -1900,7 +1907,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   const toolbar=document.getElementById("manwStudentMaterials");
   if(toolbar)toolbar.hidden=!gradeSelect.value;
   const search=document.getElementById("lessonSearch");if(search)search.value="";
-  if(typeof buildLessonCards==="function")buildLessonCards("");
+  if(typeof window.MANW_RENDER_LESSONS==="function")window.MANW_RENDER_LESSONS("");
   if(cards){const count=document.getElementById("lessonCount");if(count)count.textContent=String(cards.querySelectorAll(".lesson-card").length)}
  }
  if(gradeSelect){
@@ -1912,7 +1919,7 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   materialSelect.addEventListener("change",()=>{
    selectedSubject=materialSelect.value.trim();
    const search=document.getElementById("lessonSearch");if(search)search.value="";
-   if(typeof buildLessonCards==="function")buildLessonCards("");
+   if(typeof window.MANW_RENDER_LESSONS==="function")window.MANW_RENDER_LESSONS("");
    const cards=document.getElementById("lessonCards");
    if(cards)cards.hidden=!gradeSelect?.value;
    const count=document.getElementById("lessonCount");

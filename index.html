@@ -1825,12 +1825,13 @@ $('back').onclick=()=>{quizFinished=false;show('lessons')};
   const prep=value==='prep3';
   const isPrepSubject=o=>/(?:تالتة|ثالثة)\\s*إعدادي|3\\s*(?:rd\\s*)?إعدادي|3\\s*(?:rd\\s*)?اعدادي|3(?:rd)?\\s*prep/i.test(o.value+' '+o.label);
   const allowed=all().filter(o=>prep?isPrepSubject(o):!isPrepSubject(o));
+  const previousSubject=subject.value||(typeof selectedSubject!=='undefined'?selectedSubject:'');
   subject.innerHTML='';
   allowed.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;subject.append(opt)});
   toolbar.hidden=!value;cards.hidden=!value;if(chat)chat.hidden=!value;
   if(value){
    if(!allowed.length){const opt=document.createElement('option');opt.value='';opt.textContent='لا توجد مواد متاحة لهذا الصف حاليًا';subject.append(opt)}
-   subject.value=allowed.some(o=>o.value===subject.value)?subject.value:(allowed[0]?.value||'');
+   subject.value=allowed.some(o=>o.value===previousSubject)?previousSubject:(allowed[0]?.value||'');
    subject.dispatchEvent(new Event('change',{bubbles:true}));
    // Ensure the lesson list follows the selected grade and subject.
    if(typeof selectedSubject!=='undefined') selectedSubject=subject.value;
